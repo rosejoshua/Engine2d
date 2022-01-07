@@ -1,56 +1,104 @@
 // GameEngine2d.cpp : This file contains the 'main' function. Program execution begins and ends there.
-//
-
-// On linux compile with:
-// g++ -std=c++17 main.cpp glad/src/glad.c -I./glad/include -o prog -lSDL2 -ldl
-// On windows compile with (if using mingw)
-// g++ main.cpp ./glad/src/glad.c -I./glad/include -o prog.exe -lmingw32 -lSDL2main -lSDL2
 
 // Third-party library
 #include "SDL.h"
+#include "SDL_ttf.h"
 
 // C++ Standard Libraries
 #include <iostream>
 
 
 int main(int argc, char* argv[]) {
-    // Create a window data type
-    // This pointer will point to the 
-    // window that is allocated from SDL_CreateWindow
-    SDL_Window* window = nullptr;
 
-    // Initialize the video subsystem.
-    // iF it returns less than 1, then an
-    // error code will be received.
+    SDL_Window* window = nullptr;
+    unsigned short int resW = 1280;
+    unsigned short int resH = 1024;
+
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "SDL could not be initialized: " <<
             SDL_GetError();
+        return 1;
     }
     else {
-        std::cout << "SDL video system is ready to go\n";
+        std::cout << "SDL video system is ready to go!" << std::endl;
     }
-    // Request a window to be created for our platform
-    // The parameters are for the title, x and y position,
-    // and the width and height of the window.
-    window = SDL_CreateWindow("C++ SDL2 Window", 20, 20, 640, 480, SDL_WINDOW_SHOWN);
+
+    window = SDL_CreateWindow("American Jo", SDL_WINDOWPOS_CENTERED, 
+        SDL_WINDOWPOS_CENTERED, resW, resH, SDL_WINDOW_RESIZABLE);
+
+    if (window == NULL) {
+        // In the case that the window could not be made...
+        std::cout << "Could not create window: " << SDL_GetError();
+    }
 
     SDL_Renderer* renderer = nullptr;
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
-    SDL_Surface* surface = SDL_LoadBMP("./images/test.bmp");
-    SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
-    SDL_FreeSurface(surface);
+    if (TTF_Init() == -1) {
+        std::cout << "SDL_TTF could not be initialized: " <<
+            SDL_GetError() << std::endl;
+        return 1;
+    }
+    else {
+        std::cout << "SDL_TTF system ready to go!" << std::endl;
+    }
 
-    // Create a rectangle
-    SDL_Rect rectangle;
-    rectangle.x = 50;
-    rectangle.y = 100;
-    rectangle.w = 200;
-    rectangle.h = 200;
+    TTF_Font* titleMenuFont = TTF_OpenFont("./fonts/fette.ttf", 32);
+    if (titleMenuFont == nullptr) {
+        std::cout << "Could not load font" << std::endl;
+        exit(1);
+    }
 
+    SDL_Surface* surfaceTextTitle = TTF_RenderText_Solid(titleMenuFont, "AMERICAN JO", { 255,255,255 });
+    SDL_Texture* textureTextTitle = SDL_CreateTextureFromSurface(renderer, surfaceTextTitle);
+    // Free the surface
+    SDL_FreeSurface(surfaceTextTitle);
+
+    SDL_Surface* surfaceTextStart = TTF_RenderText_Solid(titleMenuFont, "Start", { 255,255,255 });
+    SDL_Texture* textureTextStart = SDL_CreateTextureFromSurface(renderer, surfaceTextStart);
+    // Free the surface
+    SDL_FreeSurface(surfaceTextStart);
+
+    SDL_Surface* surfaceTextOptions = TTF_RenderText_Solid(titleMenuFont, "Options", { 255,255,255 });
+    SDL_Texture* textureTextOptions = SDL_CreateTextureFromSurface(renderer, surfaceTextOptions);
+    // Free the surface
+    SDL_FreeSurface(surfaceTextOptions);
+
+    SDL_Surface* surfaceTextQuit = TTF_RenderText_Solid(titleMenuFont, "Quit", { 255,255,255 });
+    SDL_Texture* textureTextQuit = SDL_CreateTextureFromSurface(renderer, surfaceTextQuit);
+    // Free the surface
+    SDL_FreeSurface(surfaceTextQuit);
+
+
+    // Create a rectangle for Title
+    SDL_Rect titleWrapper;
+    titleWrapper.w = (int)(resW / 1.4);
+    titleWrapper.h = resH / 3;
+    titleWrapper.x = (int)(resW - titleWrapper.w) / 2;
+    titleWrapper.y = resH / 8;
+
+    //Create 3 rectangles for Menu Items
+    SDL_Rect startWrapper;
+    startWrapper.w = (int)(resW / 4.0 * 5.0 / 7.0);
+    startWrapper.h = resH / 9;
+    startWrapper.x = (int)(resW - startWrapper.w) / 2;
+    startWrapper.y = resH / 1.6;
+
+    SDL_Rect optionsWrapper;
+    optionsWrapper.w = (int)(resW / 4.0);
+    optionsWrapper.h = resH / 9;
+    optionsWrapper.x = (int)(resW - optionsWrapper.w) / 2;
+    optionsWrapper.y = resH / 1.4;
+
+    SDL_Rect quitWrapper;
+    quitWrapper.w = (int)(resW / 4.0 * 4.0 / 7.0);
+    quitWrapper.h = resH / 9;
+    quitWrapper.x = (int)(resW - quitWrapper.w) / 2;
+    quitWrapper.y = resH / 1.23;
 
     // Infinite loop for our application
     bool gameIsRunning = true;
+    bool showMenu = true;
     // Main application loop
     while (gameIsRunning) {
         SDL_Event event;
@@ -70,12 +118,20 @@ int main(int argc, char* argv[]) {
         SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
 
-        // Do our drawing
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-        SDL_RenderDrawLine(renderer, 5, 5, 100, 120);
+        if (showMenu) {
+        // Title Screen
+        SDL_RenderCopy(renderer, textureTextTitle, NULL, &titleWrapper);
+        SDL_RenderCopy(renderer, textureTextStart, NULL, &startWrapper);
+        SDL_RenderCopy(renderer, textureTextOptions, NULL, &optionsWrapper);
+        SDL_RenderCopy(renderer, textureTextQuit, NULL, &quitWrapper);
+        }
 
-        //        SDL_RenderDrawRect(renderer,&rectangle);
-        SDL_RenderCopy(renderer, texture, NULL, &rectangle);
+        // Do our drawing
+        //SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
+        //SDL_RenderDrawLine(renderer, 5, 5, 100, 120);
+
+        //SDL_RenderDrawRect(renderer,&rectangle);
+        //SDL_RenderCopy(renderer, texture, NULL, &rectangle);
 
 
         // Finally show what we've drawn
@@ -83,14 +139,17 @@ int main(int argc, char* argv[]) {
 
     }
 
-    SDL_DestroyTexture(texture);
+    SDL_DestroyTexture(textureTextTitle);
+    SDL_DestroyTexture(textureTextStart);
+    SDL_DestroyTexture(textureTextOptions);
+    SDL_DestroyTexture(textureTextQuit);
     // We destroy our window. We are passing in the pointer
     // that points to the memory allocated by the 
     // 'SDL_CreateWindow' function. Remember, this is
     // a 'C-style' API, we don't have destructors.
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 
-    // our program.
     SDL_Quit();
     return 0;
 }
