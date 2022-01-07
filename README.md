@@ -1,0 +1,3 @@
+# Engine2d
+
+Hello! This will be an amazing 2d game engine for my platformer game idea (Super Contra meets Super Meatboy meats Smash TV meets Serious Sam...or something along those lines). For the gameplay mechanics, I would like overpowered blowback physics from weapons to allow for long fast jumps that can be continued (pogoed) for long distances with enough skill. Also, twin stick movement/aiming, enemy hoards, huge bosses, money system, mini-games (arcade and gambling), store weapons purchases, and permadeath after 3 lives. Oh and tons of easter eggs and nostalgia from the 90's. That's about all I've figured out for now. 
