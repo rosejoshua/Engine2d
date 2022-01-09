@@ -11,8 +11,8 @@
 int main(int argc, char* argv[]) {
 
     SDL_Window* window = nullptr;
-    unsigned short int resW = 1280;
-    unsigned short int resH = 1024;
+    int resW = 1280;
+    int resH = 1024;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "SDL could not be initialized: " <<
@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
     }
 
     window = SDL_CreateWindow("American Jo", SDL_WINDOWPOS_CENTERED, 
-        SDL_WINDOWPOS_CENTERED, resW, resH, SDL_WINDOW_RESIZABLE);
+        SDL_WINDOWPOS_CENTERED, resW, resH, 0);
 
     if (window == NULL) {
         // In the case that the window could not be made...
@@ -56,18 +56,27 @@ int main(int argc, char* argv[]) {
 
     SDL_Surface* surfaceTextStart = TTF_RenderText_Solid(titleMenuFont, "Start", { 255,255,255 });
     SDL_Texture* textureTextStart = SDL_CreateTextureFromSurface(renderer, surfaceTextStart);
-    // Free the surface
     SDL_FreeSurface(surfaceTextStart);
+
+    SDL_Surface* surfaceTextStartSelected = TTF_RenderText_Solid(titleMenuFont, "Start", { 255,0,0 });
+    SDL_Texture* textureTextStartSelected = SDL_CreateTextureFromSurface(renderer, surfaceTextStartSelected);
+    SDL_FreeSurface(surfaceTextStartSelected);
 
     SDL_Surface* surfaceTextOptions = TTF_RenderText_Solid(titleMenuFont, "Options", { 255,255,255 });
     SDL_Texture* textureTextOptions = SDL_CreateTextureFromSurface(renderer, surfaceTextOptions);
-    // Free the surface
     SDL_FreeSurface(surfaceTextOptions);
+
+    SDL_Surface* surfaceTextOptionsSelected = TTF_RenderText_Solid(titleMenuFont, "Options", { 255,0,0 });
+    SDL_Texture* textureTextOptionsSelected = SDL_CreateTextureFromSurface(renderer, surfaceTextOptionsSelected);
+    SDL_FreeSurface(surfaceTextOptionsSelected);
 
     SDL_Surface* surfaceTextQuit = TTF_RenderText_Solid(titleMenuFont, "Quit", { 255,255,255 });
     SDL_Texture* textureTextQuit = SDL_CreateTextureFromSurface(renderer, surfaceTextQuit);
-    // Free the surface
     SDL_FreeSurface(surfaceTextQuit);
+
+    SDL_Surface* surfaceTextQuitSelected = TTF_RenderText_Solid(titleMenuFont, "Quit", { 255,0,0 });
+    SDL_Texture* textureTextQuitSelected = SDL_CreateTextureFromSurface(renderer, surfaceTextQuitSelected);
+    SDL_FreeSurface(surfaceTextQuitSelected);
 
 
     // Create a rectangle for Title
@@ -99,6 +108,7 @@ int main(int argc, char* argv[]) {
     // Infinite loop for our application
     bool gameIsRunning = true;
     bool showMenu = true;
+    int selectedMenuItem = 1;
     // Main application loop
     while (gameIsRunning) {
         SDL_Event event;
@@ -109,6 +119,27 @@ int main(int argc, char* argv[]) {
             // Handle each specific event
             if (event.type == SDL_QUIT) {
                 gameIsRunning = false;
+            }
+            if (event.type == SDL_KEYDOWN) {
+                if (event.key.keysym.sym == SDLK_w || event.key.keysym.sym == SDLK_UP)
+                selectedMenuItem--;
+
+                if (event.key.keysym.sym == SDLK_s || event.key.keysym.sym == SDLK_DOWN)
+                    selectedMenuItem++;
+
+                if (selectedMenuItem == 0)
+                    selectedMenuItem = 3;
+
+                if (selectedMenuItem == 4)
+                    selectedMenuItem = 1;
+
+                if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_RETURN2)
+                    if (selectedMenuItem == 1)
+                        showMenu = false;
+                    else if (selectedMenuItem == 2)
+                        std::cout << "Options Menu Selected Without Implementation" << std::endl;
+                    else if (selectedMenuItem == 3)
+                        gameIsRunning=false;
             }
         }
         // (2) Handle Updates
@@ -121,9 +152,9 @@ int main(int argc, char* argv[]) {
         if (showMenu) {
         // Title Screen
         SDL_RenderCopy(renderer, textureTextTitle, NULL, &titleWrapper);
-        SDL_RenderCopy(renderer, textureTextStart, NULL, &startWrapper);
-        SDL_RenderCopy(renderer, textureTextOptions, NULL, &optionsWrapper);
-        SDL_RenderCopy(renderer, textureTextQuit, NULL, &quitWrapper);
+        SDL_RenderCopy(renderer, selectedMenuItem == 1 ? textureTextStartSelected : textureTextStart, NULL, &startWrapper);
+        SDL_RenderCopy(renderer, selectedMenuItem == 2 ? textureTextOptionsSelected : textureTextOptions, NULL, &optionsWrapper);
+        SDL_RenderCopy(renderer, selectedMenuItem == 3 ? textureTextQuitSelected : textureTextQuit, NULL, &quitWrapper);
         }
 
         // Do our drawing
