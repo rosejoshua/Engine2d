@@ -6,6 +6,7 @@
 
 // C++ Standard Libraries
 #include <iostream>
+#include <math.h>
 
 
 int main(int argc, char* argv[]) {
@@ -13,6 +14,15 @@ int main(int argc, char* argv[]) {
     SDL_Window* window = nullptr;
     int resW = 1280;
     int resH = 1024;
+    int groundPlane = 885;
+
+    float fps = 165.0;
+    float yVelocity = 0.0;
+
+    bool gameIsRunning = true;
+    bool showMenu = true;
+    int selectedMenuItem = 1;
+    bool gameStarted = false;
 
     if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         std::cout << "SDL could not be initialized: " <<
@@ -49,6 +59,8 @@ int main(int argc, char* argv[]) {
         exit(1);
     }
 
+    // Texture Asset Creation
+
     SDL_Surface* surfaceTextTitle = TTF_RenderText_Solid(titleMenuFont, "AMERICAN JO", { 255,255,255 });
     SDL_Texture* textureTextTitle = SDL_CreateTextureFromSurface(renderer, surfaceTextTitle);
     // Free the surface
@@ -78,6 +90,10 @@ int main(int argc, char* argv[]) {
     SDL_Texture* textureTextQuitSelected = SDL_CreateTextureFromSurface(renderer, surfaceTextQuitSelected);
     SDL_FreeSurface(surfaceTextQuitSelected);
 
+    SDL_Surface* surfaceBackground = SDL_LoadBMP("./images/TestBackground.bmp");
+    SDL_Texture* textureBackground = SDL_CreateTextureFromSurface(renderer, surfaceBackground);
+    SDL_FreeSurface(surfaceBackground);
+
 
     // Create a rectangle for Title
     SDL_Rect titleWrapper;
@@ -86,7 +102,7 @@ int main(int argc, char* argv[]) {
     titleWrapper.x = (int)(resW - titleWrapper.w) / 2;
     titleWrapper.y = resH / 8;
 
-    //Create 3 rectangles for Menu Items
+    // Create 3 rectangles for Menu Items
     SDL_Rect startWrapper;
     startWrapper.w = (int)(resW / 4.0 * 5.0 / 7.0);
     startWrapper.h = resH / 9;
@@ -105,10 +121,22 @@ int main(int argc, char* argv[]) {
     quitWrapper.x = (int)(resW - quitWrapper.w) / 2;
     quitWrapper.y = resH / 1.23;
 
+    // Create a rectangle to wrap the background image
+    SDL_Rect backgroundWrapper;
+    backgroundWrapper.w = 3200;
+    backgroundWrapper.h = 1024;
+    backgroundWrapper.x = 0;
+    backgroundWrapper.y = 0;
+
+    // Create a rectangle for player model
+    SDL_Rect playerRect;
+    playerRect.w = 60;
+    playerRect.h = 120;
+    playerRect.x = 610;
+    playerRect.y = 30;
+
     // Infinite loop for our application
-    bool gameIsRunning = true;
-    bool showMenu = true;
-    int selectedMenuItem = 1;
+
     // Main application loop
     while (gameIsRunning) {
         SDL_Event event;
@@ -133,16 +161,50 @@ int main(int argc, char* argv[]) {
                 if (selectedMenuItem == 4)
                     selectedMenuItem = 1;
 
-                if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_RETURN2)
-                    if (selectedMenuItem == 1)
+                if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_RETURN2) {
+                    if (selectedMenuItem == 1) {
                         showMenu = false;
+                        gameStarted = true;
+                    }
                     else if (selectedMenuItem == 2)
                         std::cout << "Options Menu Selected Without Implementation" << std::endl;
                     else if (selectedMenuItem == 3)
-                        gameIsRunning=false;
+                        gameIsRunning = false;
+                }
+
+                if (event.key.keysym.sym == SDLK_ESCAPE && gameStarted) {
+                    showMenu = true;
+                    gameStarted = false;
+                }
+
+                // todo: fix slugishness
+                if (event.key.keysym.sym == SDLK_SPACE && gameStarted && (yVelocity == 0.0)) {
+                    yVelocity += -23;
+                    playerRect.y += (int)yVelocity;
+                }
             }
         }
         // (2) Handle Updates
+
+        // Apply gravity to vertical velocity if airborne, seems reversed because 
+        // grid origin is top left of screen...
+
+        if (playerRect.y <= (groundPlane - 120) && gameStarted) {
+            yVelocity += (120.0 / fps);
+            playerRect.y += (int)yVelocity;
+
+            if (playerRect.y > (groundPlane - 120)) {
+                playerRect.y = groundPlane - 120;
+                yVelocity = 0.0;
+            }
+
+            // todo: need check here to make sure engine isn't lagging
+            // using SDL_GetTicks
+            SDL_Delay((int)(1000.0/fps));
+        }
+            
+
+
 
         // (3) Clear and Draw the Screen
         // Gives us a clear "canvas"
@@ -151,19 +213,17 @@ int main(int argc, char* argv[]) {
 
         if (showMenu) {
         // Title Screen
-        SDL_RenderCopy(renderer, textureTextTitle, NULL, &titleWrapper);
-        SDL_RenderCopy(renderer, selectedMenuItem == 1 ? textureTextStartSelected : textureTextStart, NULL, &startWrapper);
-        SDL_RenderCopy(renderer, selectedMenuItem == 2 ? textureTextOptionsSelected : textureTextOptions, NULL, &optionsWrapper);
-        SDL_RenderCopy(renderer, selectedMenuItem == 3 ? textureTextQuitSelected : textureTextQuit, NULL, &quitWrapper);
+            SDL_RenderCopy(renderer, textureTextTitle, NULL, &titleWrapper);
+            SDL_RenderCopy(renderer, selectedMenuItem == 1 ? textureTextStartSelected : textureTextStart, NULL, &startWrapper);
+            SDL_RenderCopy(renderer, selectedMenuItem == 2 ? textureTextOptionsSelected : textureTextOptions, NULL, &optionsWrapper);
+            SDL_RenderCopy(renderer, selectedMenuItem == 3 ? textureTextQuitSelected : textureTextQuit, NULL, &quitWrapper);
         }
 
-        // Do our drawing
-        //SDL_SetRenderDrawColor(renderer, 255, 255, 255, SDL_ALPHA_OPAQUE);
-        //SDL_RenderDrawLine(renderer, 5, 5, 100, 120);
-
-        //SDL_RenderDrawRect(renderer,&rectangle);
-        //SDL_RenderCopy(renderer, texture, NULL, &rectangle);
-
+        if (gameStarted) {
+            SDL_RenderCopy(renderer, textureBackground, NULL, &backgroundWrapper);
+            SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
+            SDL_RenderFillRect(renderer, &playerRect);
+        }
 
         // Finally show what we've drawn
         SDL_RenderPresent(renderer);
@@ -174,13 +234,13 @@ int main(int argc, char* argv[]) {
     SDL_DestroyTexture(textureTextStart);
     SDL_DestroyTexture(textureTextOptions);
     SDL_DestroyTexture(textureTextQuit);
+    SDL_DestroyTexture(textureBackground);
     // We destroy our window. We are passing in the pointer
     // that points to the memory allocated by the 
     // 'SDL_CreateWindow' function. Remember, this is
     // a 'C-style' API, we don't have destructors.
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
-
     SDL_Quit();
     return 0;
 }
