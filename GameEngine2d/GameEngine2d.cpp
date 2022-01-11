@@ -6,6 +6,7 @@
 
 // C++ Standard Libraries
 #include <iostream>
+#include <math.h>
 
 
 int main(int argc, char* argv[]) {
@@ -13,6 +14,10 @@ int main(int argc, char* argv[]) {
     SDL_Window* window = nullptr;
     int resW = 1280;
     int resH = 1024;
+    int groundPlane = 885;
+
+    float fps = 165.0;
+    float yVelocity = 0.0;
 
     bool gameIsRunning = true;
     bool showMenu = true;
@@ -123,6 +128,13 @@ int main(int argc, char* argv[]) {
     backgroundWrapper.x = 0;
     backgroundWrapper.y = 0;
 
+    // Create a rectangle for player model
+    SDL_Rect playerRect;
+    playerRect.w = 60;
+    playerRect.h = 120;
+    playerRect.x = 610;
+    playerRect.y = 30;
+
     // Infinite loop for our application
 
     // Main application loop
@@ -164,9 +176,35 @@ int main(int argc, char* argv[]) {
                     showMenu = true;
                     gameStarted = false;
                 }
+
+                // todo: fix slugishness
+                if (event.key.keysym.sym == SDLK_SPACE && gameStarted && (yVelocity == 0.0)) {
+                    yVelocity += -23;
+                    playerRect.y += (int)yVelocity;
+                }
             }
         }
         // (2) Handle Updates
+
+        // Apply gravity to vertical velocity if airborne, seems reversed because 
+        // grid origin is top left of screen...
+
+        if (playerRect.y <= (groundPlane - 120) && gameStarted) {
+            yVelocity += (120.0 / fps);
+            playerRect.y += (int)yVelocity;
+
+            if (playerRect.y > (groundPlane - 120)) {
+                playerRect.y = groundPlane - 120;
+                yVelocity = 0.0;
+            }
+
+            // todo: need check here to make sure engine isn't lagging
+            // using SDL_GetTicks
+            SDL_Delay((int)(1000.0/fps));
+        }
+            
+
+
 
         // (3) Clear and Draw the Screen
         // Gives us a clear "canvas"
@@ -183,6 +221,8 @@ int main(int argc, char* argv[]) {
 
         if (gameStarted) {
             SDL_RenderCopy(renderer, textureBackground, NULL, &backgroundWrapper);
+            SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
+            SDL_RenderFillRect(renderer, &playerRect);
         }
 
         // Finally show what we've drawn
