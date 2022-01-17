@@ -6,16 +6,21 @@
 
 // C++ Standard Libraries
 #include <iostream>
+#include <string>
 #include <math.h>
 
+#include "TextureRectangle.hpp"
+#include "TextureTextRectangle.hpp"
 
 int main(int argc, char* argv[]) {
 
     SDL_Window* window = nullptr;
-    int resW = 1280;
+    int resW = 1600;
     int resH = 1024;
     int groundPlane = 885;
+    int tileW = 60;
 
+    // todo: automate fps to grab the actual setting of refresh rate?
     float fps = 165.0;
     float yVelocity = 0.0;
 
@@ -33,7 +38,7 @@ int main(int argc, char* argv[]) {
         std::cout << "SDL video system is ready to go!" << std::endl;
     }
 
-    window = SDL_CreateWindow("American Jo", SDL_WINDOWPOS_CENTERED, 
+    window = SDL_CreateWindow("Pew Pew Pew", SDL_WINDOWPOS_CENTERED, 
         SDL_WINDOWPOS_CENTERED, resW, resH, 0);
 
     if (window == NULL) {
@@ -53,7 +58,9 @@ int main(int argc, char* argv[]) {
         std::cout << "SDL_TTF system ready to go!" << std::endl;
     }
 
-    TTF_Font* titleMenuFont = TTF_OpenFont("./fonts/fette.ttf", 32);
+    TTF_Font* titleMenuFont = nullptr;
+    titleMenuFont = TTF_OpenFont("./fonts/fette.ttf", 32);
+
     if (titleMenuFont == nullptr) {
         std::cout << "Could not load font" << std::endl;
         exit(1);
@@ -61,77 +68,33 @@ int main(int argc, char* argv[]) {
 
     // Texture Asset Creation
 
-    SDL_Surface* surfaceTextTitle = TTF_RenderText_Solid(titleMenuFont, "AMERICAN JO", { 255,255,255 });
-    SDL_Texture* textureTextTitle = SDL_CreateTextureFromSurface(renderer, surfaceTextTitle);
-    // Free the surface
-    SDL_FreeSurface(surfaceTextTitle);
+    TextureTextRectangle menuTitle = TextureTextRectangle(renderer, "PEW PEW PEW", titleMenuFont, 255, 255, 255);
+    menuTitle.SetRectangleProperties(((int)(resW / 1.4)), (resH / 3), ((int)(resW - (int)(resW / 1.4)) / 2), (resH / 8));
 
-    SDL_Surface* surfaceTextStart = TTF_RenderText_Solid(titleMenuFont, "Start", { 255,255,255 });
-    SDL_Texture* textureTextStart = SDL_CreateTextureFromSurface(renderer, surfaceTextStart);
-    SDL_FreeSurface(surfaceTextStart);
+    TextureTextRectangle menuStart = TextureTextRectangle(renderer, "Start", titleMenuFont, 255, 255, 255);
+    menuStart.SetRectangleProperties(((int)(resW / 4.0 * 5.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 5.0 / 7.0)) / 2), (resH / 1.6));
+    TextureTextRectangle menuStartSelected = TextureTextRectangle(renderer, "Start", titleMenuFont, 255, 0, 0);
+    menuStartSelected.SetRectangleProperties(((int)(resW / 4.0 * 5.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 5.0 / 7.0)) / 2), (resH / 1.6));
 
-    SDL_Surface* surfaceTextStartSelected = TTF_RenderText_Solid(titleMenuFont, "Start", { 255,0,0 });
-    SDL_Texture* textureTextStartSelected = SDL_CreateTextureFromSurface(renderer, surfaceTextStartSelected);
-    SDL_FreeSurface(surfaceTextStartSelected);
+    TextureTextRectangle menuOptions = TextureTextRectangle(renderer, "Options", titleMenuFont, 255, 255, 255);
+    menuOptions.SetRectangleProperties(((int)(resW / 4.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0)) / 2), (resH / 1.4));
+    TextureTextRectangle menuOptionsSelected = TextureTextRectangle(renderer, "Options", titleMenuFont, 255, 0, 0);
+    menuOptionsSelected.SetRectangleProperties(((int)(resW / 4.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0)) / 2), (resH / 1.4));
 
-    SDL_Surface* surfaceTextOptions = TTF_RenderText_Solid(titleMenuFont, "Options", { 255,255,255 });
-    SDL_Texture* textureTextOptions = SDL_CreateTextureFromSurface(renderer, surfaceTextOptions);
-    SDL_FreeSurface(surfaceTextOptions);
+    TextureTextRectangle menuQuit = TextureTextRectangle(renderer, "Quit", titleMenuFont, 255, 255, 255);
+    menuQuit.SetRectangleProperties(((int)(resW / 4.0 * 4.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 4.0 / 7.0)) / 2), (resH / 1.23));
+    TextureTextRectangle menuQuitSelected = TextureTextRectangle(renderer, "Quit", titleMenuFont, 255, 0, 0);
+    menuQuitSelected.SetRectangleProperties(((int)(resW / 4.0 * 4.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 4.0 / 7.0)) / 2), (resH / 1.23));
 
-    SDL_Surface* surfaceTextOptionsSelected = TTF_RenderText_Solid(titleMenuFont, "Options", { 255,0,0 });
-    SDL_Texture* textureTextOptionsSelected = SDL_CreateTextureFromSurface(renderer, surfaceTextOptionsSelected);
-    SDL_FreeSurface(surfaceTextOptionsSelected);
+    TextureRectangle textureBackground = TextureRectangle(renderer, "./images/TestBackground.bmp");
+    textureBackground.SetRectangleProperties(3200, 1024, 0, 0);
 
-    SDL_Surface* surfaceTextQuit = TTF_RenderText_Solid(titleMenuFont, "Quit", { 255,255,255 });
-    SDL_Texture* textureTextQuit = SDL_CreateTextureFromSurface(renderer, surfaceTextQuit);
-    SDL_FreeSurface(surfaceTextQuit);
-
-    SDL_Surface* surfaceTextQuitSelected = TTF_RenderText_Solid(titleMenuFont, "Quit", { 255,0,0 });
-    SDL_Texture* textureTextQuitSelected = SDL_CreateTextureFromSurface(renderer, surfaceTextQuitSelected);
-    SDL_FreeSurface(surfaceTextQuitSelected);
-
-    SDL_Surface* surfaceBackground = SDL_LoadBMP("./images/TestBackground.bmp");
-    SDL_Texture* textureBackground = SDL_CreateTextureFromSurface(renderer, surfaceBackground);
-    SDL_FreeSurface(surfaceBackground);
-
-
-    // Create a rectangle for Title
-    SDL_Rect titleWrapper;
-    titleWrapper.w = (int)(resW / 1.4);
-    titleWrapper.h = resH / 3;
-    titleWrapper.x = (int)(resW - titleWrapper.w) / 2;
-    titleWrapper.y = resH / 8;
-
-    // Create 3 rectangles for Menu Items
-    SDL_Rect startWrapper;
-    startWrapper.w = (int)(resW / 4.0 * 5.0 / 7.0);
-    startWrapper.h = resH / 9;
-    startWrapper.x = (int)(resW - startWrapper.w) / 2;
-    startWrapper.y = resH / 1.6;
-
-    SDL_Rect optionsWrapper;
-    optionsWrapper.w = (int)(resW / 4.0);
-    optionsWrapper.h = resH / 9;
-    optionsWrapper.x = (int)(resW - optionsWrapper.w) / 2;
-    optionsWrapper.y = resH / 1.4;
-
-    SDL_Rect quitWrapper;
-    quitWrapper.w = (int)(resW / 4.0 * 4.0 / 7.0);
-    quitWrapper.h = resH / 9;
-    quitWrapper.x = (int)(resW - quitWrapper.w) / 2;
-    quitWrapper.y = resH / 1.23;
-
-    // Create a rectangle to wrap the background image
-    SDL_Rect backgroundWrapper;
-    backgroundWrapper.w = 3200;
-    backgroundWrapper.h = 1024;
-    backgroundWrapper.x = 0;
-    backgroundWrapper.y = 0;
+    TextureRectangle textureBackgroundTile = TextureRectangle(renderer, "./images/TestBackgroundTile.bmp");
 
     // Create a rectangle for player model
     SDL_Rect playerRect;
-    playerRect.w = 60;
-    playerRect.h = 120;
+    playerRect.w = 40;
+    playerRect.h = 80;
     playerRect.x = 610;
     playerRect.y = 30;
 
@@ -177,9 +140,8 @@ int main(int argc, char* argv[]) {
                     gameStarted = false;
                 }
 
-                // todo: fix slugishness
-                if (event.key.keysym.sym == SDLK_SPACE && gameStarted && (yVelocity == 0.0)) {
-                    yVelocity += -23;
+                if (event.key.keysym.sym == SDLK_SPACE) {
+                    yVelocity -= 16;
                     playerRect.y += (int)yVelocity;
                 }
             }
@@ -189,12 +151,12 @@ int main(int argc, char* argv[]) {
         // Apply gravity to vertical velocity if airborne, seems reversed because 
         // grid origin is top left of screen...
 
-        if (playerRect.y <= (groundPlane - 120) && gameStarted) {
-            yVelocity += (120.0 / fps);
+        if (playerRect.y <= (groundPlane - 80) && gameStarted) {
+            yVelocity += (80.0 / fps);
             playerRect.y += (int)yVelocity;
 
-            if (playerRect.y > (groundPlane - 120)) {
-                playerRect.y = groundPlane - 120;
+            if (playerRect.y > (groundPlane - 80)) {
+                playerRect.y = groundPlane - 80;
                 yVelocity = 0.0;
             }
 
@@ -202,9 +164,6 @@ int main(int argc, char* argv[]) {
             // using SDL_GetTicks
             SDL_Delay((int)(1000.0/fps));
         }
-            
-
-
 
         // (3) Clear and Draw the Screen
         // Gives us a clear "canvas"
@@ -213,45 +172,36 @@ int main(int argc, char* argv[]) {
 
         if (showMenu) {
         // Title Screen
-            SDL_RenderCopy(renderer, textureTextTitle, NULL, &titleWrapper);
-            SDL_RenderCopy(renderer, selectedMenuItem == 1 ? textureTextStartSelected : textureTextStart, NULL, &startWrapper);
-            SDL_RenderCopy(renderer, selectedMenuItem == 2 ? textureTextOptionsSelected : textureTextOptions, NULL, &optionsWrapper);
-            SDL_RenderCopy(renderer, selectedMenuItem == 3 ? textureTextQuitSelected : textureTextQuit, NULL, &quitWrapper);
+           
+            menuTitle.render(renderer);
+            
+            selectedMenuItem == 1 ? menuStartSelected.render(renderer) : menuStart.render(renderer);
+            selectedMenuItem == 2 ? menuOptionsSelected.render(renderer) : menuOptions.render(renderer);
+            selectedMenuItem == 3 ? menuQuitSelected.render(renderer) : menuQuit.render(renderer);
         }
 
         if (gameStarted) {
-            SDL_RenderCopy(renderer, textureBackground, NULL, &backgroundWrapper);
+            //textureBackground.render(renderer);
+            
+        for (unsigned char i = 0; i <= resW / tileW; i++)
+        {
+            for (unsigned char j = 0; j <= resH / tileW; j++) 
+            {
+                textureBackgroundTile.SetRectangleProperties( tileW, tileW, i * tileW, j * tileW );
+                textureBackgroundTile.render(renderer);
+            }
+        }
+
             SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
             SDL_RenderFillRect(renderer, &playerRect);
         }
 
         // Finally show what we've drawn
         SDL_RenderPresent(renderer);
-
     }
 
-    SDL_DestroyTexture(textureTextTitle);
-    SDL_DestroyTexture(textureTextStart);
-    SDL_DestroyTexture(textureTextOptions);
-    SDL_DestroyTexture(textureTextQuit);
-    SDL_DestroyTexture(textureBackground);
-    // We destroy our window. We are passing in the pointer
-    // that points to the memory allocated by the 
-    // 'SDL_CreateWindow' function. Remember, this is
-    // a 'C-style' API, we don't have destructors.
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
     return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file

@@ -143,6 +143,12 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="GameEngine2d.cpp" />
+    <ClCompile Include="TextureRectangle.cpp" />
+    <ClCompile Include="TextureTextRectangle.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="TextureRectangle.hpp" />
+    <ClInclude Include="TextureTextRectangle.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
