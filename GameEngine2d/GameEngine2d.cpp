@@ -20,22 +20,46 @@ int main(int argc, char* argv[]) {
     int groundPlane = 885;
     int tileW = 60;
 
+    //Analog joystick dead zone
+    const int JOYSTICK_DEAD_ZONE = 5000;
+    SDL_Joystick* gGameController = NULL;
+
     // todo: automate fps to grab the actual setting of refresh rate?
     float fps = 165.0;
     float yVelocity = 0.0;
+    float xVelocity = 0.0;
 
     bool gameIsRunning = true;
     bool showMenu = true;
     int selectedMenuItem = 1;
     bool gameStarted = false;
 
-    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
+    //Normalized direction
+    int xDir = 0;
+    int yDir = 0;
+
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
         std::cout << "SDL could not be initialized: " <<
             SDL_GetError();
         return 1;
     }
     else {
         std::cout << "SDL video system is ready to go!" << std::endl;
+    }
+
+    //Check for joysticks
+    if (SDL_NumJoysticks() < 1)
+    {
+        std::cout << "Warning: No joysticks connected!" << std::endl;
+    }
+    else
+    {
+        //Load joystick
+        gGameController = SDL_JoystickOpen(0);
+        if (gGameController == NULL)
+        {
+            std::cout << "Warning: Unable to open game controller! SDL Error: " << std::endl;
+        }
     }
 
     window = SDL_CreateWindow("Pew Pew Pew", SDL_WINDOWPOS_CENTERED, 
@@ -46,7 +70,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Could not create window: " << SDL_GetError();
     }
 
-    SDL_Renderer* renderer = nullptr;
+    static SDL_Renderer* renderer = nullptr;
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     if (TTF_Init() == -1) {
@@ -86,8 +110,8 @@ int main(int argc, char* argv[]) {
     TextureTextRectangle menuQuitSelected = TextureTextRectangle(renderer, "Quit", titleMenuFont, 255, 0, 0);
     menuQuitSelected.SetRectangleProperties(((int)(resW / 4.0 * 4.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 4.0 / 7.0)) / 2), (resH / 1.23));
 
-    TextureRectangle textureBackground = TextureRectangle(renderer, "./images/TestBackground.bmp");
-    textureBackground.SetRectangleProperties(3200, 1024, 0, 0);
+    //TextureRectangle textureBackground = TextureRectangle(renderer, "./images/TestBackground.bmp");
+    //textureBackground.SetRectangleProperties(3200, 1024, 0, 0);
 
     TextureRectangle textureBackgroundTile = TextureRectangle(renderer, "./images/TestBackgroundTile.bmp");
 
@@ -111,7 +135,7 @@ int main(int argc, char* argv[]) {
             if (event.type == SDL_QUIT) {
                 gameIsRunning = false;
             }
-            if (event.type == SDL_KEYDOWN) {
+            else if (event.type == SDL_KEYDOWN) {
                 if (event.key.keysym.sym == SDLK_w || event.key.keysym.sym == SDLK_UP)
                 selectedMenuItem--;
 
@@ -145,6 +169,49 @@ int main(int argc, char* argv[]) {
                     playerRect.y += (int)yVelocity;
                 }
             }
+            else if (event.type == SDL_JOYAXISMOTION)
+            {
+                //Motion on controller 0
+                if (event.jaxis.which == 0)
+                {
+                    //X axis motion
+                    if (event.jaxis.axis == 0)
+                    {
+                        //Left of dead zone
+                        if (event.jaxis.value < -JOYSTICK_DEAD_ZONE)
+                        {
+                            xDir = -1;
+                        }
+                        //Right of dead zone
+                        else if (event.jaxis.value > JOYSTICK_DEAD_ZONE)
+                        {
+                            xDir = 1;
+                        }
+                        else
+                        {
+                            xDir = 0;
+                        }
+                    }
+                    //Y axis motion
+                    else if (event.jaxis.axis == 1)
+                    {
+                        //Below of dead zone
+                        if (event.jaxis.value < -JOYSTICK_DEAD_ZONE)
+                        {
+                            yDir = -1;
+                        }
+                        //Above of dead zone
+                        else if (event.jaxis.value > JOYSTICK_DEAD_ZONE)
+                        {
+                            yDir = 1;
+                        }
+                        else
+                        {
+                            yDir = 0;
+                        }
+                    }
+                }
+            }
         }
         // (2) Handle Updates
 
@@ -159,11 +226,31 @@ int main(int argc, char* argv[]) {
                 playerRect.y = groundPlane - 80;
                 yVelocity = 0.0;
             }
-
-            // todo: need check here to make sure engine isn't lagging
-            // using SDL_GetTicks
-            SDL_Delay((int)(1000.0/fps));
         }
+
+        if (xDir == -1) {
+            if (xVelocity >= -20.0) {
+                xVelocity -= (15.0 / fps);
+                if (xVelocity < -20.0) {
+                    xVelocity = -20.0;
+                }
+                playerRect.x += (int)xVelocity;
+            }
+        }
+        else if (xDir == 1) {
+            if (xVelocity <= 20.0) {
+                xVelocity += (15.0 / fps);
+                if (xVelocity > 20.0) {
+                    xVelocity = 20.0;
+                }
+                playerRect.x += (int)xVelocity;
+            }
+        }
+        else xVelocity = 0.0;
+
+        // todo: need check here to make sure engine isn't lagging
+        // using SDL_GetTicks
+        SDL_Delay((int)(1000.0/fps));
 
         // (3) Clear and Draw the Screen
         // Gives us a clear "canvas"
@@ -199,6 +286,10 @@ int main(int argc, char* argv[]) {
         // Finally show what we've drawn
         SDL_RenderPresent(renderer);
     }
+
+    //Close game controller
+    SDL_JoystickClose(gGameController);
+    gGameController = NULL;
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
