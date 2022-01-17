@@ -14,7 +14,7 @@ public:
     TextureRectangle(SDL_Renderer*& renderer, std::string filepath);
     ~TextureRectangle();
 
-    void SetRectangleProperties(int x, int y, int w, int h);
+    void SetRectangleProperties(int w, int h, int x, int y);
 
     void render(SDL_Renderer*& renderer);
 };

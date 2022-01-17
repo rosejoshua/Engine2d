@@ -18,6 +18,7 @@ int main(int argc, char* argv[]) {
     int resW = 1600;
     int resH = 1024;
     int groundPlane = 885;
+    int tileW = 60;
 
     // todo: automate fps to grab the actual setting of refresh rate?
     float fps = 165.0;
@@ -87,6 +88,8 @@ int main(int argc, char* argv[]) {
 
     TextureRectangle textureBackground = TextureRectangle(renderer, "./images/TestBackground.bmp");
     textureBackground.SetRectangleProperties(3200, 1024, 0, 0);
+
+    TextureRectangle textureBackgroundTile = TextureRectangle(renderer, "./images/TestBackgroundTile.bmp");
 
     // Create a rectangle for player model
     SDL_Rect playerRect;
@@ -175,14 +178,20 @@ int main(int argc, char* argv[]) {
             selectedMenuItem == 1 ? menuStartSelected.render(renderer) : menuStart.render(renderer);
             selectedMenuItem == 2 ? menuOptionsSelected.render(renderer) : menuOptions.render(renderer);
             selectedMenuItem == 3 ? menuQuitSelected.render(renderer) : menuQuit.render(renderer);
-            
-            //SDL_RenderCopy(renderer, selectedMenuItem == 2 ? textureTextOptionsSelected : textureTextOptions, NULL, &optionsWrapper);
-            //SDL_RenderCopy(renderer, selectedMenuItem == 3 ? textureTextQuitSelected : textureTextQuit, NULL, &quitWrapper);
         }
 
         if (gameStarted) {
-            //SDL_RenderCopy(renderer, textureBackground, NULL, &backgroundWrapper);
-            textureBackground.render(renderer);
+            //textureBackground.render(renderer);
+            
+        for (unsigned char i = 0; i <= resW / tileW; i++)
+        {
+            for (unsigned char j = 0; j <= resH / tileW; j++) 
+            {
+                textureBackgroundTile.SetRectangleProperties( tileW, tileW, i * tileW, j * tileW );
+                textureBackgroundTile.render(renderer);
+            }
+        }
+
             SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
             SDL_RenderFillRect(renderer, &playerRect);
         }
