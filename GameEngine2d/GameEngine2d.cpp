@@ -34,9 +34,26 @@ int main(int argc, char* argv[]) {
     int selectedMenuItem = 1;
     bool gameStarted = false;
 
-    //Normalized direction
+    //joy direction reduced to int from -1 to 1
     int xDir = 0;
+    int xDirLast = 0;
     int yDir = 0;
+
+    bool button0Down = false;
+    bool button1Down = false;
+    bool button2Down = false;
+    bool button3Down = false;
+    bool button4Down = false;
+    bool button5Down = false;
+    bool button6Down = false;
+    bool button7Down = false;
+    bool button8Down = false;
+    bool button9Down = false;
+    bool button10Down = false;
+    bool button11Down = false;
+    bool button12Down = false;
+
+    bool canJump = true;
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
         std::cout << "SDL could not be initialized: " <<
@@ -125,17 +142,20 @@ int main(int argc, char* argv[]) {
     // Infinite loop for our application
 
     // Main application loop
-    while (gameIsRunning) {
+    while (gameIsRunning) 
+    {
         SDL_Event event;
 
         // (1) Handle Input
         // Start our event loop
-        while (SDL_PollEvent(&event)) {
+        while (SDL_PollEvent(&event)) 
+        {
             // Handle each specific event
             if (event.type == SDL_QUIT) {
                 gameIsRunning = false;
             }
-            else if (event.type == SDL_KEYDOWN) {
+            else if (event.type == SDL_KEYDOWN) 
+            {
                 if (event.key.keysym.sym == SDLK_w || event.key.keysym.sym == SDLK_UP)
                 selectedMenuItem--;
 
@@ -148,7 +168,8 @@ int main(int argc, char* argv[]) {
                 if (selectedMenuItem == 4)
                     selectedMenuItem = 1;
 
-                if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_RETURN2) {
+                if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_RETURN2) 
+                {
                     if (selectedMenuItem == 1) {
                         showMenu = false;
                         gameStarted = true;
@@ -159,12 +180,14 @@ int main(int argc, char* argv[]) {
                         gameIsRunning = false;
                 }
 
-                if (event.key.keysym.sym == SDLK_ESCAPE && gameStarted) {
+                if (event.key.keysym.sym == SDLK_ESCAPE && gameStarted) 
+                {
                     showMenu = true;
                     gameStarted = false;
                 }
 
-                if (event.key.keysym.sym == SDLK_SPACE) {
+                if (event.key.keysym.sym == SDLK_SPACE) 
+                {
                     yVelocity -= 16;
                     playerRect.y += (int)yVelocity;
                 }
@@ -212,11 +235,106 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+            else if (event.type == SDL_JOYBUTTONDOWN)
+            {
+                if (event.jbutton.button == 0) {
+                    button0Down = true;
+                }
+                else if (event.jbutton.button == 1) {
+                    button1Down = true;
+                }
+                else if (event.jbutton.button == 2) {
+                    button2Down = true;
+                }
+                else if (event.jbutton.button == 3) {
+                    button3Down = true;
+                }
+                else if (event.jbutton.button == 4) {
+                    button4Down = true;
+                }
+                else if (event.jbutton.button == 5) {
+                    button5Down = true;
+                }
+                else if (event.jbutton.button == 6) {
+                    button6Down = true;
+                }
+                else if (event.jbutton.button == 7) {
+                    button7Down = true;
+                }
+                else if (event.jbutton.button == 8) {
+                    button8Down = true;
+                }
+                else if (event.jbutton.button == 9) {
+                    button9Down = true;
+                }
+                else if (event.jbutton.button == 10) {
+                    button10Down = true;
+                }
+                else if (event.jbutton.button == 11) {
+                    button11Down = true;
+                }
+                else if (event.jbutton.button == 12) {
+                    button12Down = true;
+                }
+            }
+            else if (event.type == SDL_JOYBUTTONUP)
+            {
+                if (event.jbutton.button == 0) {
+                    button0Down = false;
+                }
+                else if (event.jbutton.button == 1) {
+                    button1Down = false;
+                }
+                else if (event.jbutton.button == 2) {
+                    button2Down = false;
+                }
+                else if (event.jbutton.button == 3) {
+                    button3Down = false;
+                }
+                else if (event.jbutton.button == 4) {
+                    button4Down = false;
+                }
+                else if (event.jbutton.button == 5) {
+                    button5Down = false;
+                }
+                else if (event.jbutton.button == 6) {
+                    button6Down = false;
+                }
+                else if (event.jbutton.button == 7) {
+                    button7Down = false;
+                }
+                else if (event.jbutton.button == 8) {
+                    button8Down = false;
+                }
+                else if (event.jbutton.button == 9) {
+                    button9Down = false;
+                }
+                else if (event.jbutton.button == 10) {
+                    button10Down = false;
+                }
+                else if (event.jbutton.button == 11) {
+                    button11Down = false;
+                }
+                else if (event.jbutton.button == 12) {
+                    button12Down = false;
+                }
+            }
+
         }
         // (2) Handle Updates
 
         // Apply gravity to vertical velocity if airborne, seems reversed because 
         // grid origin is top left of screen...
+        
+        // Check for ground contact
+        if (playerRect.y == (groundPlane - 80) && button0Down == false) {
+            canJump = true;
+        }       
+        else if (button0Down && canJump) {
+            yVelocity -= 16.0;
+            playerRect.y += (int)yVelocity;
+            canJump = false;
+        }
 
         if (playerRect.y <= (groundPlane - 80) && gameStarted) {
             yVelocity += (80.0 / fps);
@@ -228,25 +346,29 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        if (xDir == -1) {
-            if (xVelocity >= -20.0) {
-                xVelocity -= (15.0 / fps);
-                if (xVelocity < -20.0) {
-                    xVelocity = -20.0;
+
+        if (xDir == -1 && xDirLast != 1) {
+            if (xVelocity > -10.0) {
+                xVelocity -= (37.0 / fps);
+                if (xVelocity < -10.0) {
+                    xVelocity = -10.0;
                 }
-                playerRect.x += (int)xVelocity;
             }
         }
-        else if (xDir == 1) {
-            if (xVelocity <= 20.0) {
-                xVelocity += (15.0 / fps);
-                if (xVelocity > 20.0) {
-                    xVelocity = 20.0;
+        else if (xDir == 1 && xDirLast != -1) {
+            if (xVelocity <= 10.0) {
+                xVelocity += (37.0 / fps);
+                if (xVelocity > 10.0) {
+                    xVelocity = 10.0;
                 }
-                playerRect.x += (int)xVelocity;
             }
         }
-        else xVelocity = 0.0;
+        else {
+            xVelocity = 0.0;
+        }
+
+        playerRect.x += (int)xVelocity;
+        
 
         // todo: need check here to make sure engine isn't lagging
         // using SDL_GetTicks
@@ -285,7 +407,11 @@ int main(int argc, char* argv[]) {
 
         // Finally show what we've drawn
         SDL_RenderPresent(renderer);
+
+        xDirLast = xDir;
+
     }
+
 
     //Close game controller
     SDL_JoystickClose(gGameController);
