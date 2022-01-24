@@ -16,8 +16,9 @@ int main(int argc, char* argv[]) {
 
     SDL_Window* window = nullptr;
     int resW = 1600;
-    int resH = 1024;
-    int groundPlane = 885;
+    int resH = 1200;
+    int groundPlane = 1020;
+
     int tileW = 60;
 
     //Analog joystick dead zone
@@ -108,7 +109,6 @@ int main(int argc, char* argv[]) {
     }
 
     // Texture Asset Creation
-
     TextureTextRectangle menuTitle = TextureTextRectangle(renderer, "PEW PEW PEW", titleMenuFont, 255, 255, 255);
     menuTitle.SetRectangleProperties(((int)(resW / 1.4)), (resH / 3), ((int)(resW - (int)(resW / 1.4)) / 2), (resH / 8));
 
@@ -127,10 +127,8 @@ int main(int argc, char* argv[]) {
     TextureTextRectangle menuQuitSelected = TextureTextRectangle(renderer, "Quit", titleMenuFont, 255, 0, 0);
     menuQuitSelected.SetRectangleProperties(((int)(resW / 4.0 * 4.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 4.0 / 7.0)) / 2), (resH / 1.23));
 
-    //TextureRectangle textureBackground = TextureRectangle(renderer, "./images/TestBackground.bmp");
-    //textureBackground.SetRectangleProperties(3200, 1024, 0, 0);
-
-    TextureRectangle textureBackgroundTile = TextureRectangle(renderer, "./images/TestBackgroundTile.bmp");
+    TextureRectangle textureBackgroundSky = TextureRectangle(renderer, "./images/TestBackgroundTile.bmp");
+    TextureRectangle textureGround = TextureRectangle(renderer, "./images/ground.bmp");
 
     // Create a rectangle for player model
     SDL_Rect playerRect;
@@ -391,18 +389,26 @@ int main(int argc, char* argv[]) {
 
         if (gameStarted) {
             //textureBackground.render(renderer);
-            
-        for (unsigned char i = 0; i <= resW / tileW; i++)
-        {
-            for (unsigned char j = 0; j <= resH / tileW; j++) 
+            for (unsigned char i = 0; i <= resW / tileW; i++)
             {
-                textureBackgroundTile.SetRectangleProperties( tileW, tileW, i * tileW, j * tileW );
-                textureBackgroundTile.render(renderer);
+                for (unsigned char j = 0; j <= resH / tileW; j++) 
+                {
+                    textureBackgroundSky.SetRectangleProperties( tileW, tileW, i * tileW, j * tileW );
+                    textureBackgroundSky.render(renderer);
+                }
             }
-        }
 
-            SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
-            SDL_RenderFillRect(renderer, &playerRect);
+            for (unsigned char i = 0; i <= resW / tileW; i++)
+            {
+                for (unsigned char j = (groundPlane)/tileW; j <= resH / tileW; j++)
+                {
+                    textureGround.SetRectangleProperties(tileW, tileW, i * tileW, j * tileW);
+                    textureGround.render(renderer);
+                }
+            }
+
+                SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
+                SDL_RenderFillRect(renderer, &playerRect);
         }
 
         // Finally show what we've drawn
