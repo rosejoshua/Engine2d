@@ -15,18 +15,29 @@
 int main(int argc, char* argv[]) {
 
     SDL_Window* window = nullptr;
-    int resW = 1600;
-    int resH = 1200;
-    int groundPlane = 1020;
-
+    int resW = 1200;
+    int resH = 800;
     int tileW = 60;
+    int groundPlane = resH - 2*tileW;
+    int playerHeight = 80;
+    int playerWidth = 40;
+
+    const int jumpVelocity = -16;
+    const float horVelModPlayer = 0.25;
+    const float horVelModPlayerSprint = 0.4;
+    const float gravityModifier = 0.5;
+    const float heavyGravityModifier = 0.8;
+    const float maxHorVelocity = 10.0;
+
+    Uint32 lastPhysicsUpdate = SDL_GetTicks64();
+    Uint32 lastDrawUpdate = SDL_GetTicks64();
+
 
     //Analog joystick dead zone
     const int JOYSTICK_DEAD_ZONE = 5000;
     SDL_Joystick* gGameController = NULL;
 
-    // todo: automate fps to grab the actual setting of refresh rate?
-    float fps = 165.0;
+    float maxFps = 165.0;
     float yVelocity = 0.0;
     float xVelocity = 0.0;
 
@@ -132,10 +143,10 @@ int main(int argc, char* argv[]) {
 
     // Create a rectangle for player model
     SDL_Rect playerRect;
-    playerRect.w = 40;
-    playerRect.h = 80;
-    playerRect.x = 610;
-    playerRect.y = 30;
+    playerRect.w = playerWidth;
+    playerRect.h = playerHeight;
+    playerRect.x = resW/2 - playerWidth/2;
+    playerRect.y = 0;
 
     // Infinite loop for our application
 
@@ -327,15 +338,17 @@ int main(int argc, char* argv[]) {
         // Check for ground contact
         if (playerRect.y == (groundPlane - 80) && button0Down == false) {
             canJump = true;
+            yVelocity = 0.0; 
         }       
         else if (button0Down && canJump) {
-            yVelocity -= 16.0;
+            yVelocity += jumpVelocity;
             playerRect.y += (int)yVelocity;
+            //multijumping
             canJump = false;
         }
 
         if (playerRect.y <= (groundPlane - 80) && gameStarted) {
-            yVelocity += (80.0 / fps);
+            yVelocity += gravityModifier;
             playerRect.y += (int)yVelocity;
 
             if (playerRect.y > (groundPlane - 80)) {
@@ -346,18 +359,18 @@ int main(int argc, char* argv[]) {
 
 
         if (xDir == -1 && xDirLast != 1) {
-            if (xVelocity > -10.0) {
-                xVelocity -= (37.0 / fps);
-                if (xVelocity < -10.0) {
-                    xVelocity = -10.0;
+            if (xVelocity > -maxHorVelocity) {
+                xVelocity -= horVelModPlayer;
+                if (xVelocity < -maxHorVelocity) {
+                    xVelocity = -maxHorVelocity;
                 }
             }
         }
         else if (xDir == 1 && xDirLast != -1) {
-            if (xVelocity <= 10.0) {
-                xVelocity += (37.0 / fps);
-                if (xVelocity > 10.0) {
-                    xVelocity = 10.0;
+            if (xVelocity <= maxHorVelocity) {
+                xVelocity += horVelModPlayer;
+                if (xVelocity > maxHorVelocity) {
+                    xVelocity = maxHorVelocity;
                 }
             }
         }
@@ -365,12 +378,13 @@ int main(int argc, char* argv[]) {
             xVelocity = 0.0;
         }
 
+        // todo: use time delta here
         playerRect.x += (int)xVelocity;
         
 
         // todo: need check here to make sure engine isn't lagging
         // using SDL_GetTicks
-        SDL_Delay((int)(1000.0/fps));
+        SDL_Delay((int)(1000.0/maxFps));
 
         // (3) Clear and Draw the Screen
         // Gives us a clear "canvas"
