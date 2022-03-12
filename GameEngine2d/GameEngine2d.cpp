@@ -15,29 +15,29 @@
 int main(int argc, char* argv[]) {
 
     SDL_Window* window = nullptr;
-    int resW = 1200;
-    int resH = 800;
+    int resW = 1600;
+    int resH = 1200;
     int tileW = 60;
-    int groundPlane = resH - 2*tileW;
-    int playerHeight = 80;
-    int playerWidth = 40;
+    int groundPlane = -(resH%tileW) + resH - 2*tileW;
+    int playerHeight = tileW*2.5;
+    int playerWidth = tileW*1.5;
 
-    const int jumpVelocity = -16;
-    const float horVelModPlayer = 0.25;
-    const float horVelModPlayerSprint = 0.4;
-    const float gravityModifier = 0.5;
-    const float heavyGravityModifier = 0.8;
-    const float maxHorVelocity = 10.0;
+    const float jumpVelocity = playerHeight/-40.0;
+    const float horVelModPlayer = 0.5;
+    const float horVelModPlayerSprint = playerHeight/600.0;
+    //gravity per tick
+    const float gravityModifier = playerHeight/9000.0;
+    const float heavyGravityModifier = 0.4;
+    const int maxWalkVelocity = playerHeight/12;
+    const int maxHorSprintVelocity = playerHeight/70;
 
-    Uint32 lastPhysicsUpdate = SDL_GetTicks64();
-    Uint32 lastDrawUpdate = SDL_GetTicks64();
+    Uint64 lastPhysicsUpdate = SDL_GetTicks64();
+    Uint64 lastDrawUpdate = SDL_GetTicks64();
 
-
+    
     //Analog joystick dead zone
     const int JOYSTICK_DEAD_ZONE = 5000;
     SDL_Joystick* gGameController = NULL;
-
-    float maxFps = 165.0;
     float yVelocity = 0.0;
     float xVelocity = 0.0;
 
@@ -152,7 +152,8 @@ int main(int argc, char* argv[]) {
 
     // Main application loop
     while (gameIsRunning) 
-    {
+    {   
+        while (SDL_GetTicks64() - lastPhysicsUpdate < 6) {}
         SDL_Event event;
 
         // (1) Handle Input
@@ -197,7 +198,7 @@ int main(int argc, char* argv[]) {
 
                 if (event.key.keysym.sym == SDLK_SPACE) 
                 {
-                    yVelocity -= 16;
+                    yVelocity += jumpVelocity;
                     playerRect.y += (int)yVelocity;
                 }
             }
@@ -331,46 +332,33 @@ int main(int argc, char* argv[]) {
 
         }
         // (2) Handle Updates
-
         // Apply gravity to vertical velocity if airborne, seems reversed because 
         // grid origin is top left of screen...
-        
         // Check for ground contact
-        if (playerRect.y == (groundPlane - 80) && button0Down == false) {
+        if (playerRect.y == (groundPlane - playerHeight) && button0Down == false) {
             canJump = true;
             yVelocity = 0.0; 
         }       
         else if (button0Down && canJump) {
             yVelocity += jumpVelocity;
-            playerRect.y += (int)yVelocity;
-            //multijumping
             canJump = false;
         }
 
-        if (playerRect.y <= (groundPlane - 80) && gameStarted) {
-            yVelocity += gravityModifier;
-            playerRect.y += (int)yVelocity;
-
-            if (playerRect.y > (groundPlane - 80)) {
-                playerRect.y = groundPlane - 80;
-                yVelocity = 0.0;
-            }
-        }
-
-
+        playerRect.x += (int)(xVelocity * (SDL_GetTicks64() - lastPhysicsUpdate));
+        
         if (xDir == -1 && xDirLast != 1) {
-            if (xVelocity > -maxHorVelocity) {
-                xVelocity -= horVelModPlayer;
-                if (xVelocity < -maxHorVelocity) {
-                    xVelocity = -maxHorVelocity;
+            if (xVelocity > -maxHorSprintVelocity) {
+                xVelocity -= horVelModPlayerSprint;
+                if (xVelocity < -maxHorSprintVelocity) {
+                    xVelocity = -maxHorSprintVelocity;
                 }
             }
         }
         else if (xDir == 1 && xDirLast != -1) {
-            if (xVelocity <= maxHorVelocity) {
-                xVelocity += horVelModPlayer;
-                if (xVelocity > maxHorVelocity) {
-                    xVelocity = maxHorVelocity;
+            if (xVelocity <= maxHorSprintVelocity) {
+                xVelocity += horVelModPlayerSprint;
+                if (xVelocity > maxHorSprintVelocity) {
+                    xVelocity = maxHorSprintVelocity;
                 }
             }
         }
@@ -379,12 +367,16 @@ int main(int argc, char* argv[]) {
         }
 
         // todo: use time delta here
-        playerRect.x += (int)xVelocity;
-        
+        if (playerRect.y <= (groundPlane - playerHeight) && gameStarted) {
+            playerRect.y += yVelocity * (SDL_GetTicks64() - lastPhysicsUpdate);
+            yVelocity += gravityModifier * (SDL_GetTicks64() - lastPhysicsUpdate);
 
-        // todo: need check here to make sure engine isn't lagging
-        // using SDL_GetTicks
-        SDL_Delay((int)(1000.0/maxFps));
+            if (playerRect.y > (groundPlane - playerHeight)) {
+                playerRect.y = groundPlane - playerHeight;
+                yVelocity = 0.0;
+            }
+        }
+        
 
         // (3) Clear and Draw the Screen
         // Gives us a clear "canvas"
@@ -402,7 +394,6 @@ int main(int argc, char* argv[]) {
         }
 
         if (gameStarted) {
-            //textureBackground.render(renderer);
             for (unsigned char i = 0; i <= resW / tileW; i++)
             {
                 for (unsigned char j = 0; j <= resH / tileW; j++) 
@@ -412,14 +403,14 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            for (unsigned char i = 0; i <= resW / tileW; i++)
-            {
-                for (unsigned char j = (groundPlane)/tileW; j <= resH / tileW; j++)
-                {
-                    textureGround.SetRectangleProperties(tileW, tileW, i * tileW, j * tileW);
-                    textureGround.render(renderer);
-                }
-            }
+            //for (unsigned char i = 0; i <= resW / tileW; i++)
+            //{
+            //    for (unsigned char j = (groundPlane)/tileW; j <= resH / tileW; j++)
+            //    {
+            //        textureGround.SetRectangleProperties(tileW, tileW, i * tileW, j * tileW);
+            //        textureGround.render(renderer);
+            //    }
+            //}
 
                 SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
                 SDL_RenderFillRect(renderer, &playerRect);
@@ -430,6 +421,8 @@ int main(int argc, char* argv[]) {
 
         xDirLast = xDir;
 
+        std::cout << "end of game loop, ticks: " << (lastPhysicsUpdate = SDL_GetTicks64()) << std::endl;
+        
     }
 
 
