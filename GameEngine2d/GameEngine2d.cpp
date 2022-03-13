@@ -398,7 +398,7 @@ int main(int argc, char* argv[]) {
             {
                 for (unsigned char j = 0; j <= resH / tileW; j++) 
                 {
-                    textureBackgroundSky.SetRectangleProperties( tileW, tileW, i * tileW, j * tileW );
+                    textureBackgroundSky.setRectangleProperties( tileW, tileW, i * tileW, j * tileW );
                     textureBackgroundSky.render(renderer);
                 }
             }
