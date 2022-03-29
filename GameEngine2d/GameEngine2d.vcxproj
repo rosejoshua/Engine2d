@@ -144,11 +144,13 @@
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GameEngine2d.cpp" />
+    <ClCompile Include="TestMap.cpp" />
     <ClCompile Include="TextureRectangle.cpp" />
     <ClCompile Include="TextureTextRectangle.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.hpp" />
+    <ClInclude Include="TestMap.hpp" />
     <ClInclude Include="TextureRectangle.hpp" />
     <ClInclude Include="TextureTextRectangle.hpp" />
   </ItemGroup>
