@@ -403,14 +403,14 @@ int main(int argc, char* argv[]) {
                 }
             }
 
-            //for (unsigned char i = 0; i <= resW / tileW; i++)
-            //{
-            //    for (unsigned char j = (groundPlane)/tileW; j <= resH / tileW; j++)
-            //    {
-            //        textureGround.SetRectangleProperties(tileW, tileW, i * tileW, j * tileW);
-            //        textureGround.render(renderer);
-            //    }
-            //}
+            for (unsigned char i = 0; i <= resW / tileW; i++)
+            {
+                for (unsigned char j = (groundPlane)/tileW; j <= resH / tileW; j++)
+                {
+                    textureGround.setRectangleProperties(tileW, tileW, i * tileW, j * tileW);
+                    textureGround.render(renderer);
+                }
+            }
 
                 SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
                 SDL_RenderFillRect(renderer, &playerRect);
