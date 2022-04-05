@@ -11,16 +11,20 @@
 
 #include "TextureRectangle.hpp"
 #include "TextureTextRectangle.hpp"
+#include "TestMap.hpp"
 
 int main(int argc, char* argv[]) {
 
     SDL_Window* window = nullptr;
-    int resW = 1600;
+    int resW = 2000;
     int resH = 1200;
     int tileW = 60;
     int groundPlane = -(resH%tileW) + resH - 2*tileW;
     int playerHeight = tileW*2.5;
     int playerWidth = tileW*1.5;
+
+    int cameraX = 0;
+    int cameraY = 0;
 
     const float jumpVelocity = playerHeight/-40.0;
     const float horVelModPlayer = 0.5;
@@ -34,6 +38,7 @@ int main(int argc, char* argv[]) {
     Uint64 lastPhysicsUpdate = SDL_GetTicks64();
     Uint64 lastDrawUpdate = SDL_GetTicks64();
 
+    TestMap* testMap = new TestMap();
     
     //Analog joystick dead zone
     const int JOYSTICK_DEAD_ZONE = 5000;
@@ -140,6 +145,7 @@ int main(int argc, char* argv[]) {
 
     TextureRectangle textureBackgroundSky = TextureRectangle(renderer, "./images/TestBackgroundTile.bmp");
     TextureRectangle textureGround = TextureRectangle(renderer, "./images/ground.bmp");
+    TextureRectangle textureSpikes = TextureRectangle(renderer, "./images/spikes.bmp");
 
     // Create a rectangle for player model
     SDL_Rect playerRect;
@@ -147,6 +153,27 @@ int main(int argc, char* argv[]) {
     playerRect.h = playerHeight;
     playerRect.x = resW/2 - playerWidth/2;
     playerRect.y = 0;
+
+    //Create a second rectangle for player model previous position, necessary for backtracking player position in the event of a collision
+    SDL_Rect prevPlayerRect;
+
+    //Create a rect to hold dimensions and position of a map tile for collision modeling
+    SDL_Rect tileCollisionRect;
+
+    //Create a rectangle for union of playerRect and tileRect modeling collision overlap
+    SDL_Rect collisionIntersectionRect;
+    collisionIntersectionRect.x = 0;
+    collisionIntersectionRect.y = 0;
+    collisionIntersectionRect.w = tileW;
+    collisionIntersectionRect.h = tileW;
+
+    //function for updating prevPlayerRect with current playerRect
+    /*storePlayerRect() {
+        prevPlayerRect.w = playerRect.w;
+        prevPlayerRect.h = playerRect.h;
+        prevPlayerRect.x = playerRect.x;
+        prevPlayerRect.y = playerRect.y;
+    }*/
 
     // Infinite loop for our application
 
@@ -331,15 +358,22 @@ int main(int argc, char* argv[]) {
             }
 
         }
+
+        //capture playerPosition
+        prevPlayerRect.w = playerRect.w;
+        prevPlayerRect.h = playerRect.h;
+        prevPlayerRect.x = playerRect.x;
+        prevPlayerRect.y = playerRect.y;
+
         // (2) Handle Updates
         // Apply gravity to vertical velocity if airborne, seems reversed because 
         // grid origin is top left of screen...
-        // Check for ground contact
+
         if (playerRect.y == (groundPlane - playerHeight) && button0Down == false) {
             canJump = true;
             yVelocity = 0.0; 
         }       
-        else if (button0Down && canJump) {
+         else if (button0Down && canJump) {
             yVelocity += jumpVelocity;
             canJump = false;
         }
@@ -365,9 +399,34 @@ int main(int argc, char* argv[]) {
         else {
             xVelocity = 0.0;
         }
+        // still needs multiplier for tileWidth to ensure physics similar across resolutions
+        // refactor for collision with tiles instead of static ground plane
+        if (gameStarted) {
+            playerRect.y += yVelocity * (SDL_GetTicks64() - lastPhysicsUpdate);
+            yVelocity += gravityModifier * (SDL_GetTicks64() - lastPhysicsUpdate);
 
-        // todo: use time delta here
-        if (playerRect.y <= (groundPlane - playerHeight) && gameStarted) {
+            for (int i = playerRect.x/tileW; i <= (playerRect.x + playerWidth) / tileW ; i++)
+            {
+                for (int j = playerRect.y/tileW; j <= (playerRect.y + playerHeight) / tileW; j++) 
+                {
+                    if (TestMap::m_mapArray[j][i] % 2 == 0)
+                    {
+                        std::cout << "Collision detected in tile[" << i << "][" << j << "]" << std::endl;
+                        tileCollisionRect.x = i * tileW;
+                        tileCollisionRect.y = j * tileW;
+                        SDL_UnionRect(&playerRect, &tileCollisionRect, &collisionIntersectionRect);
+                    }
+                }
+            }
+
+            //temporary for testing
+            if (playerRect.y > (groundPlane - playerHeight)) {
+                playerRect.y = groundPlane - playerHeight;
+                yVelocity = 0.0;
+            }
+        }
+
+        /*if (gameStarted) {
             playerRect.y += yVelocity * (SDL_GetTicks64() - lastPhysicsUpdate);
             yVelocity += gravityModifier * (SDL_GetTicks64() - lastPhysicsUpdate);
 
@@ -375,7 +434,8 @@ int main(int argc, char* argv[]) {
                 playerRect.y = groundPlane - playerHeight;
                 yVelocity = 0.0;
             }
-        }
+
+        }*/
         
 
         // (3) Clear and Draw the Screen
@@ -394,7 +454,7 @@ int main(int argc, char* argv[]) {
         }
 
         if (gameStarted) {
-            for (unsigned char i = 0; i <= resW / tileW; i++)
+           /* for (unsigned char i = 0; i <= resW / tileW; i++)
             {
                 for (unsigned char j = 0; j <= resH / tileW; j++) 
                 {
@@ -413,6 +473,43 @@ int main(int argc, char* argv[]) {
             }
 
                 SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
+                SDL_RenderFillRect(renderer, &playerRect);*/
+
+            for (unsigned char i = 0; i <= (resW / tileW) + 1; i++)
+            {
+                for (unsigned char j = 0; j <= (resH / tileW) + 1; j++)
+                {
+                    textureBackgroundSky.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
+                    textureBackgroundSky.render(renderer);
+                }
+            }
+
+            for (int i = 0; i <= (resW / tileW) + 1; i++)
+            {
+                for (int j = 0; j <= (resH / tileW) + 1; j++)
+                {
+                    if (TestMap::m_mapArray[cameraY / tileW + j][cameraX / tileW + i] != 1)
+                    {
+                        if (TestMap::m_mapArray[cameraY / tileW + j][cameraX / tileW + i] == 0)
+                        {
+                            textureGround.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
+                            textureGround.render(renderer);
+
+                            
+
+                        }
+                        else if (TestMap::m_mapArray[cameraY / tileW + j][cameraX / tileW + i] == 6)
+                        {
+                            textureSpikes.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
+                            textureSpikes.render(renderer);
+                        }
+                    }
+                    
+                    //textureBackgroundSky.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
+                    //textureBackgroundSky.render(renderer);
+                }
+            }
+                SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
                 SDL_RenderFillRect(renderer, &playerRect);
         }
 
@@ -421,7 +518,8 @@ int main(int argc, char* argv[]) {
 
         xDirLast = xDir;
 
-        std::cout << "end of game loop, ticks: " << (lastPhysicsUpdate = SDL_GetTicks64()) << std::endl;
+        //std::cout << "end of game loop, ticks: " << (lastPhysicsUpdate = SDL_GetTicks64()) << std::endl;
+        lastPhysicsUpdate = SDL_GetTicks64();
         
     }
 
