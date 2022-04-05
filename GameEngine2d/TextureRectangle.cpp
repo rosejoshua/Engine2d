@@ -7,6 +7,7 @@
 
 TextureRectangle::TextureRectangle(SDL_Renderer*& renderer, std::string filepath) {
     SDL_Surface* surface = SDL_LoadBMP(filepath.c_str());
+    SDL_SetColorKey(surface, SDL_TRUE, SDL_MapRGB(surface->format, 255, 255, 255));
     m_texture = SDL_CreateTextureFromSurface(renderer, surface);
     SDL_FreeSurface(surface);
 }

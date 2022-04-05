@@ -3,7 +3,8 @@
 class TestMap
 {
 public:
-	//static const int m_mapArray[][];
-
+	const static int m_mapArray[44][50];
+	TestMap();
+	~TestMap();
 };
 
