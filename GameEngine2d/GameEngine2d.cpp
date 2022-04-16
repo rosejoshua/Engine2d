@@ -40,7 +40,7 @@ int main(int argc, char* argv[]) {
     
     //Analog joystick dead zone
     const int JOYSTICK_DEAD_ZONE = 5000;
-    SDL_Joystick* gGameController = NULL;
+    SDL_Joystick* gameController = NULL;
     float yVelocity = 0.0;
     float xVelocity = 0.0;
 
@@ -49,10 +49,17 @@ int main(int argc, char* argv[]) {
     int selectedMenuItem = 1;
     bool gameStarted = false;
 
-    //joy direction reduced to int from -1 to 1
+    //joy left analog stick direction reduced to int from -1 to 1
     int xDir = 0;
     int xDirLast = 0;
     int yDir = 0;
+
+    //bool for if right analog stick aiming is taking place to draw aim line for testing
+    bool isAiming = false;
+    //making possibly stupid assumption that asking for the aim direction before drawing/detecting collision is slower than storing last known direction in an int. Since using aim point CHANGE
+    //events to update aiming...we don't want to stop drawing aimpoints because events stop...player could still be aiming but not moving the aim analog stick
+    Sint16 aimXDir = 0;
+    Sint16 aimYDir = 0;
 
     int tilePastPlayerRect = 0;
 
@@ -89,8 +96,8 @@ int main(int argc, char* argv[]) {
     else
     {
         //Load joystick
-        gGameController = SDL_JoystickOpen(0);
-        if (gGameController == NULL)
+        gameController = SDL_JoystickOpen(0);
+        if (gameController == NULL)
         {
             std::cout << "Warning: Unable to open game controller! SDL Error: " << std::endl;
         }
@@ -241,7 +248,7 @@ int main(int argc, char* argv[]) {
                 //Motion on controller 0
                 if (event.jaxis.which == 0)
                 {
-                    //X axis motion
+                    //left analog stick X axis motion
                     if (event.jaxis.axis == 0)
                     {
                         //Left of dead zone
@@ -259,15 +266,15 @@ int main(int argc, char* argv[]) {
                             xDir = 0;
                         }
                     }
-                    //Y axis motion
+                    //left analog stick Y axis motion
                     else if (event.jaxis.axis == 1)
                     {
-                        //Below of dead zone
+                        //Below dead zone
                         if (event.jaxis.value < -JOYSTICK_DEAD_ZONE)
                         {
                             yDir = -1;
                         }
-                        //Above of dead zone
+                        //Above dead zone
                         else if (event.jaxis.value > JOYSTICK_DEAD_ZONE)
                         {
                             yDir = 1;
@@ -277,48 +284,74 @@ int main(int argc, char* argv[]) {
                             yDir = 0;
                         }
                     }
+                    //right analog stick X axis motion
+                    else if (event.jaxis.axis == 2)
+                    {
+                        aimXDir = event.jaxis.value;
+                    }
+                    //right analog stick Y axis motion
+                    else if (event.jaxis.axis == 3)
+                    {
+                        aimYDir = event.jaxis.value;
+                    }
+
                 }
+
+                    
             }
             else if (event.type == SDL_JOYBUTTONDOWN)
             {
                 if (event.jbutton.button == 0) {
                     button0Down = true;
+                    std::cout << "button 0 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 1) {
                     button1Down = true;
+                    std::cout << "button 1 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 2) {
                     button2Down = true;
+                    std::cout << "button 2 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 3) {
                     button3Down = true;
+                    std::cout << "button 3 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 4) {
                     button4Down = true;
+                    std::cout << "button 4 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 5) {
                     button5Down = true;
+                    std::cout << "button 5 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 6) {
                     button6Down = true;
+                    std::cout << "button 6 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 7) {
                     button7Down = true;
+                    std::cout << "button 7 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 8) {
                     button8Down = true;
+                    std::cout << "button 8 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 9) {
                     button9Down = true;
+                    std::cout << "button 9 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 10) {
                     button10Down = true;
+                    std::cout << "button 10 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 11) {
                     button11Down = true;
+                    std::cout << "button 11 pressed" << std::endl;
                 }
                 else if (event.jbutton.button == 12) {
                     button12Down = true;
+                    std::cout << "button 12 pressed" << std::endl;
                 }
             }
             else if (event.type == SDL_JOYBUTTONUP)
@@ -372,7 +405,7 @@ int main(int argc, char* argv[]) {
         // grid origin is top left of screen...
         
         //add jump to velocity
-        if (button0Down && canJump) {
+        if (button4Down && canJump) {
             yVelocity += jumpVelocity;
             canJump = false;
         }
@@ -419,7 +452,7 @@ int main(int argc, char* argv[]) {
                 }
                 else if (TestMap::m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
                 {
-                    if (button0Down == false)
+                    if (button4Down == false)
                     {
                         canJump = true;
                         yVelocity = 0.0;
@@ -581,6 +614,11 @@ int main(int argc, char* argv[]) {
             playerDrawingRect.y = playerRect.y - cameraY;
 
             SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
+            if (aimXDir > JOYSTICK_DEAD_ZONE || aimXDir < -JOYSTICK_DEAD_ZONE  ||
+                aimYDir > JOYSTICK_DEAD_ZONE || aimYDir < -JOYSTICK_DEAD_ZONE)
+            {
+                SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (aimXDir), playerRect.y + (aimYDir));
+            }
             SDL_RenderFillRect(renderer, &playerDrawingRect);
         }
 
@@ -589,16 +627,20 @@ int main(int argc, char* argv[]) {
 
         xDirLast = xDir;
 
-        std::cout << "playerRect position: " << std::endl;
+        /*std::cout << "playerRect position: " << std::endl;
         std::cout << "x: " << playerRect.x << std::endl;
         std::cout << "y: " << playerRect.y << std::endl;
+
+        std::cout << "camera position: " << std::endl;
+        std::cout << "x: " << cameraX << std::endl;
+        std::cout << "y: " << cameraY << std::endl;*/
         lastPhysicsUpdate = SDL_GetTicks64();
     }
 
 
     //Close game controller
-    SDL_JoystickClose(gGameController);
-    gGameController = NULL;
+    SDL_JoystickClose(gameController);
+    gameController = NULL;
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
