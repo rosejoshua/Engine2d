@@ -27,12 +27,13 @@ int main(int argc, char* argv[]) {
 
     const float jumpVelocity = playerHeight/-40.0;
     //const float horVelModPlayer = 0.5;
-    const float horVelModPlayerSprint = playerHeight/600.0;
+    const float horVelModPlayerRunSprint = playerHeight/1000.0;
+    const float horVelModPlayerWalk = playerHeight / 4000.0;
     //gravity per tick
     const float gravityModifier = playerHeight/9000.0;
-    //const float heavyGravityModifier = playerHeight/6000.0;
-    const int maxWalkVelocity = playerHeight/12;
-    const int maxHorSprintVelocity = playerHeight/75;
+    const float maxWalkVelocity = playerHeight / 170.0;
+    const float maxRunVelocity = playerHeight / 80.0;
+    const float maxSprintVelocity = playerHeight / 50.0;
 
     Uint64 lastPhysicsUpdate = SDL_GetTicks64();
 
@@ -40,6 +41,7 @@ int main(int argc, char* argv[]) {
     
     //Analog joystick dead zone
     const int JOYSTICK_DEAD_ZONE = 5000;
+    const int WALK_SPRINT_TRANSITION = 16000;
     SDL_Joystick* gameController = NULL;
     float yVelocity = 0.0;
     float xVelocity = 0.0;
@@ -49,7 +51,7 @@ int main(int argc, char* argv[]) {
     int selectedMenuItem = 1;
     bool gameStarted = false;
 
-    //joy left analog stick direction reduced to int from -1 to 1
+    //joy left analog stick direction reduced to int from -3 to 3
     int xDir = 0;
     int xDirLast = 0;
     int yDir = 0;
@@ -254,12 +256,29 @@ int main(int argc, char* argv[]) {
                         //Left of dead zone
                         if (event.jaxis.value < -JOYSTICK_DEAD_ZONE)
                         {
-                            xDir = -1;
+                            std::cout << "left stick value: " << event.jaxis.value << std::endl;
+                            if (event.jaxis.value > -WALK_SPRINT_TRANSITION)
+                            {
+                                xDir = -1;
+                                
+                            }
+                            else
+                            {
+                                xDir = -2;
+                            }
                         }
                         //Right of dead zone
                         else if (event.jaxis.value > JOYSTICK_DEAD_ZONE)
                         {
-                            xDir = 1;
+                            std::cout << "left stick value: " << event.jaxis.value << std::endl;
+                            if (event.jaxis.value < WALK_SPRINT_TRANSITION)
+                            {
+                                xDir = 1;                                
+                            }
+                            else
+                            {
+                                xDir = 2;
+                            }
                         }
                         else
                         {
@@ -411,29 +430,98 @@ int main(int argc, char* argv[]) {
         }
         else if (!button4Down && !canJump && yVelocity < 0)
         {
-            yVelocity /= 2;
+            yVelocity /= 2.0;
         }
 
-        //move player position on x axis based on xVelocity
-        
-        if (xDir == -1 && xDirLast != 1) {
-            if (xVelocity > -maxHorSprintVelocity) {
-                xVelocity -= horVelModPlayerSprint;
-                if (xVelocity < -maxHorSprintVelocity) {
-                    xVelocity = -maxHorSprintVelocity;
+        //move player position on x axis based on xVelocity        
+        if (xDir < 0 && xDirLast <= 0)
+        {
+            if (button8Down) {
+                if (xVelocity > -maxSprintVelocity)
+                {
+                    xVelocity -= horVelModPlayerRunSprint;
+                    if (xVelocity < -maxSprintVelocity)
+                    {
+                        xVelocity = -maxSprintVelocity;
+                    }
+                }
+            }
+            else if (xDir == -2)
+            {
+                if (xVelocity > -maxRunVelocity)
+                {
+                    xVelocity -= horVelModPlayerRunSprint;
+                    if (xVelocity < -maxRunVelocity)
+                    {
+                        xVelocity = -maxRunVelocity;
+                    }
+                }
+                else
+                {
+                    xVelocity = -maxRunVelocity;
+                }
+            }
+            else
+            {
+                if (xVelocity > -maxWalkVelocity)
+                {
+                    xVelocity -= horVelModPlayerWalk;
+                    if (xVelocity < -maxWalkVelocity)
+                    {
+                        xVelocity = -maxWalkVelocity;
+                    }
+                }
+                else
+                {
+                    xVelocity = -maxWalkVelocity;
                 }
             }
         }
-        else if (xDir == 1 && xDirLast != -1) {
-            if (xVelocity <= maxHorSprintVelocity) {
-                xVelocity += horVelModPlayerSprint;
-                if (xVelocity > maxHorSprintVelocity) {
-                    xVelocity = maxHorSprintVelocity;
+        else if (xDir > 0 && xDirLast >= 0)
+        {
+            if (button8Down) {
+                if (xVelocity < maxSprintVelocity)
+                {
+                    xVelocity += horVelModPlayerRunSprint;
+                    if (xVelocity > maxSprintVelocity)
+                    {
+                        xVelocity = maxSprintVelocity;
+                    }
+                }
+            }
+            else if (xDir == 2)
+            {
+                if (xVelocity < maxRunVelocity)
+                {
+                    xVelocity += horVelModPlayerRunSprint;
+                    if (xVelocity > maxRunVelocity)
+                    {
+                        xVelocity = maxRunVelocity;
+                    }
+                }
+                else
+                {
+                    xVelocity = maxRunVelocity;
+                }
+            }
+            else
+            {
+                if (xVelocity < maxWalkVelocity)
+                {
+                    xVelocity += horVelModPlayerWalk;
+                    if (xVelocity > maxWalkVelocity)
+                    {
+                        xVelocity = maxWalkVelocity;
+                    }
+                }
+                else
+                {
+                    xVelocity = maxWalkVelocity;
                 }
             }
         }
         else {
-            xVelocity = 0.0;
+            xVelocity /= 1.5;
         }
         
 
