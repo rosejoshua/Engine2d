@@ -20,7 +20,7 @@ int main(int argc, char* argv[]) {
     int resH = 1200;
     int tileW = 60;
     int playerHeight = tileW*2.5;
-    int playerWidth = tileW*1.5;
+    int playerWidth = tileW*1.3;
 
     int cameraX = 0;
     int cameraY = 0;
@@ -30,7 +30,7 @@ int main(int argc, char* argv[]) {
     const float horVelModPlayerSprint = playerHeight/600.0;
     //gravity per tick
     const float gravityModifier = playerHeight/9000.0;
-    const float heavyGravityModifier = 0.4;
+    //const float heavyGravityModifier = playerHeight/6000.0;
     const int maxWalkVelocity = playerHeight/12;
     const int maxHorSprintVelocity = playerHeight/75;
 
@@ -408,6 +408,10 @@ int main(int argc, char* argv[]) {
         if (button4Down && canJump) {
             yVelocity += jumpVelocity;
             canJump = false;
+        }
+        else if (!button4Down && !canJump && yVelocity < 0)
+        {
+            yVelocity /= 2;
         }
 
         //move player position on x axis based on xVelocity
