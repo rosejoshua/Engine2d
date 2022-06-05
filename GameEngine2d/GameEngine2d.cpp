@@ -12,12 +12,15 @@
 #include "TextureRectangle.hpp"
 #include "TextureTextRectangle.hpp"
 #include "TestMap.hpp"
+#include "ControlsManager.hpp"
 
 int main(int argc, char* argv[]) {
 
     SDL_Window* window = nullptr;
-    int resW = 2000;
-    int resH = 1200;
+    TestMap testMap;
+    ControlsManager controlsManager;
+    int resW = 2500;
+    int resH = 1400;
     int tileW = 60;
     int playerHeight = tileW*2.5;
     int playerWidth = tileW*1.3;
@@ -36,13 +39,16 @@ int main(int argc, char* argv[]) {
     const float maxSprintVelocity = playerHeight / 50.0;
 
     Uint64 lastPhysicsUpdate = SDL_GetTicks64();
+    Uint64 lastFpsCalcTime = SDL_GetTicks64();
+    int framesDrawnSinceLastFpsCheck = 0;
+    bool showFps = true;
 
-    TestMap* testMap = new TestMap();
+    //TestMap *testMap = new TestMap();
     
     //Analog joystick dead zone
-    const int JOYSTICK_DEAD_ZONE = 5000;
-    const int WALK_SPRINT_TRANSITION = 16000;
-    SDL_Joystick* gameController = NULL;
+    //const int JOYSTICK_DEAD_ZONE = 5000;
+    //const int WALK_SPRINT_TRANSITION = 16000;
+    //SDL_Joystick* gameController = NULL;
     float yVelocity = 0.0;
     float xVelocity = 0.0;
 
@@ -52,34 +58,35 @@ int main(int argc, char* argv[]) {
     bool gameStarted = false;
 
     //joy left analog stick direction reduced to int from -3 to 3
-    int xDir = 0;
-    int xDirLast = 0;
-    int yDir = 0;
+    //int xDir = 0;
+    //int xDirLast = 0;
+    //int yDir = 0;
 
     //bool for if right analog stick aiming is taking place to draw aim line for testing
-    bool isAiming = false;
+    //bool isAiming = false;
+
     //making possibly stupid assumption that asking for the aim direction before drawing/detecting collision is slower than storing last known direction in an int. Since using aim point CHANGE
     //events to update aiming...we don't want to stop drawing aimpoints because events stop...player could still be aiming but not moving the aim analog stick
-    Sint16 aimXDir = 0;
-    Sint16 aimYDir = 0;
+    //Sint16 aimXDir = 0;
+    //Sint16 aimYDir = 0;
 
     int tilePastPlayerRect = 0;
 
-    bool button0Down = false;
-    bool button1Down = false;
-    bool button2Down = false;
-    bool button3Down = false;
-    bool button4Down = false;
-    bool button5Down = false;
-    bool button6Down = false;
-    bool button7Down = false;
-    bool button8Down = false;
-    bool button9Down = false;
-    bool button10Down = false;
-    bool button11Down = false;
-    bool button12Down = false;
+    //bool button0Down = false;
+    //bool button1Down = false;
+    //bool button2Down = false;
+    //bool button3Down = false;
+    //bool button4Down = false;
+    //bool button5Down = false;
+    //bool button6Down = false;
+    //bool button7Down = false;
+    //bool button8Down = false;
+    //bool button9Down = false;
+    //bool button10Down = false;
+    //bool button11Down = false;
+    //bool button12Down = false;
 
-    bool canJump = true;
+    //bool canJump = true;
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
         std::cout << "SDL could not be initialized: " <<
@@ -98,8 +105,8 @@ int main(int argc, char* argv[]) {
     else
     {
         //Load joystick
-        gameController = SDL_JoystickOpen(0);
-        if (gameController == NULL)
+        controlsManager.gameController = SDL_JoystickOpen(0);
+        if (controlsManager.gameController == NULL)
         {
             std::cout << "Warning: Unable to open game controller! SDL Error: " << std::endl;
         }
@@ -113,6 +120,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Could not create window: " << SDL_GetError();
     }
 
+    //static necessary here?
     static SDL_Renderer* renderer = nullptr;
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
@@ -247,196 +255,36 @@ int main(int argc, char* argv[]) {
             }
             else if (event.type == SDL_JOYAXISMOTION)
             {
-                //Motion on controller 0
-                if (event.jaxis.which == 0)
-                {
-                    //left analog stick X axis motion
-                    if (event.jaxis.axis == 0)
-                    {
-                        //Left of dead zone
-                        if (event.jaxis.value < -JOYSTICK_DEAD_ZONE)
-                        {
-                            std::cout << "left stick value: " << event.jaxis.value << std::endl;
-                            if (event.jaxis.value > -WALK_SPRINT_TRANSITION)
-                            {
-                                xDir = -1;
-                                
-                            }
-                            else
-                            {
-                                xDir = -2;
-                            }
-                        }
-                        //Right of dead zone
-                        else if (event.jaxis.value > JOYSTICK_DEAD_ZONE)
-                        {
-                            std::cout << "left stick value: " << event.jaxis.value << std::endl;
-                            if (event.jaxis.value < WALK_SPRINT_TRANSITION)
-                            {
-                                xDir = 1;                                
-                            }
-                            else
-                            {
-                                xDir = 2;
-                            }
-                        }
-                        else
-                        {
-                            xDir = 0;
-                        }
-                    }
-                    //left analog stick Y axis motion
-                    else if (event.jaxis.axis == 1)
-                    {
-                        //Below dead zone
-                        if (event.jaxis.value < -JOYSTICK_DEAD_ZONE)
-                        {
-                            yDir = -1;
-                        }
-                        //Above dead zone
-                        else if (event.jaxis.value > JOYSTICK_DEAD_ZONE)
-                        {
-                            yDir = 1;
-                        }
-                        else
-                        {
-                            yDir = 0;
-                        }
-                    }
-                    //right analog stick X axis motion
-                    else if (event.jaxis.axis == 2)
-                    {
-                        aimXDir = event.jaxis.value;
-                    }
-                    //right analog stick Y axis motion
-                    else if (event.jaxis.axis == 3)
-                    {
-                        aimYDir = event.jaxis.value;
-                    }
-
-                }
-
-                    
+                controlsManager.handleJoyAxisMotion(event);
             }
             else if (event.type == SDL_JOYBUTTONDOWN)
             {
-                if (event.jbutton.button == 0) {
-                    button0Down = true;
-                    std::cout << "button 0 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 1) {
-                    button1Down = true;
-                    std::cout << "button 1 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 2) {
-                    button2Down = true;
-                    std::cout << "button 2 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 3) {
-                    button3Down = true;
-                    std::cout << "button 3 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 4) {
-                    button4Down = true;
-                    std::cout << "button 4 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 5) {
-                    button5Down = true;
-                    std::cout << "button 5 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 6) {
-                    button6Down = true;
-                    std::cout << "button 6 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 7) {
-                    button7Down = true;
-                    std::cout << "button 7 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 8) {
-                    button8Down = true;
-                    std::cout << "button 8 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 9) {
-                    button9Down = true;
-                    std::cout << "button 9 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 10) {
-                    button10Down = true;
-                    std::cout << "button 10 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 11) {
-                    button11Down = true;
-                    std::cout << "button 11 pressed" << std::endl;
-                }
-                else if (event.jbutton.button == 12) {
-                    button12Down = true;
-                    std::cout << "button 12 pressed" << std::endl;
-                }
+                controlsManager.handleJoyButtonDown(event);
             }
             else if (event.type == SDL_JOYBUTTONUP)
             {
-                if (event.jbutton.button == 0) {
-                    button0Down = false;
-                }
-                else if (event.jbutton.button == 1) {
-                    button1Down = false;
-                }
-                else if (event.jbutton.button == 2) {
-                    button2Down = false;
-                }
-                else if (event.jbutton.button == 3) {
-                    button3Down = false;
-                }
-                else if (event.jbutton.button == 4) {
-                    button4Down = false;
-                }
-                else if (event.jbutton.button == 5) {
-                    button5Down = false;
-                }
-                else if (event.jbutton.button == 6) {
-                    button6Down = false;
-                }
-                else if (event.jbutton.button == 7) {
-                    button7Down = false;
-                }
-                else if (event.jbutton.button == 8) {
-                    button8Down = false;
-                }
-                else if (event.jbutton.button == 9) {
-                    button9Down = false;
-                }
-                else if (event.jbutton.button == 10) {
-                    button10Down = false;
-                }
-                else if (event.jbutton.button == 11) {
-                    button11Down = false;
-                }
-                else if (event.jbutton.button == 12) {
-                    button12Down = false;
-                }
+                controlsManager.handleJoyButtonUp(event);
             }
 
         }
-
-        
 
         // (2) Handle Updates
         // grid origin is top left of screen...
         
         //add jump to velocity
-        if (button4Down && canJump) {
+        if (controlsManager.button4Down && controlsManager.canJump) {
             yVelocity += jumpVelocity;
-            canJump = false;
+            controlsManager.canJump = false;
         }
-        else if (!button4Down && !canJump && yVelocity < 0)
+        else if (!controlsManager.button4Down && !controlsManager.canJump && yVelocity < 0)
         {
-            yVelocity /= 2.0;
+            yVelocity /= 0.25*(float)(SDL_GetTicks64() - lastPhysicsUpdate);
         }
 
         //move player position on x axis based on xVelocity        
-        if (xDir < 0 && xDirLast <= 0)
+        if (controlsManager.xDir < 0 && controlsManager.xDirLast <= 0)
         {
-            if (button8Down) {
+            if (controlsManager.button8Down) {
                 if (xVelocity > -maxSprintVelocity)
                 {
                     xVelocity -= horVelModPlayerRunSprint;
@@ -446,7 +294,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            else if (xDir == -2)
+            else if (controlsManager.xDir == -2)
             {
                 if (xVelocity > -maxRunVelocity)
                 {
@@ -477,9 +325,9 @@ int main(int argc, char* argv[]) {
                 }
             }
         }
-        else if (xDir > 0 && xDirLast >= 0)
+        else if (controlsManager.xDir > 0 && controlsManager.xDirLast >= 0)
         {
-            if (button8Down) {
+            if (controlsManager.button8Down) {
                 if (xVelocity < maxSprintVelocity)
                 {
                     xVelocity += horVelModPlayerRunSprint;
@@ -489,7 +337,7 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
-            else if (xDir == 2)
+            else if (controlsManager.xDir == 2)
             {
                 if (xVelocity < maxRunVelocity)
                 {
@@ -521,7 +369,7 @@ int main(int argc, char* argv[]) {
             }
         }
         else {
-            xVelocity /= 1.5;
+            xVelocity /= 0.25 * (float)(SDL_GetTicks64() - lastPhysicsUpdate);
         }
         
 
@@ -540,13 +388,13 @@ int main(int argc, char* argv[]) {
                 if (i == tilePastPlayerRect) 
                 {
                     yVelocity += gravityModifier * (SDL_GetTicks64() - lastPhysicsUpdate);
-                    canJump = false;
+                    controlsManager.canJump = false;
                 }
-                else if (TestMap::m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
+                else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
                 {
-                    if (button4Down == false)
+                    if (controlsManager.button4Down == false)
                     {
-                        canJump = true;
+                        controlsManager.canJump = true;
                         yVelocity = 0.0;
                     }
                     break;
@@ -560,7 +408,7 @@ int main(int argc, char* argv[]) {
             {
                 for (int j = playerRect.y/tileW; j <= (playerRect.y + playerHeight -1) / tileW; j++) 
                 {
-                    if (TestMap::m_mapArray[j][i] % 2 == 0)
+                    if (testMap.m_mapArray[j][i] % 2 == 0)
                     {
                         tileCollisionRect.x = i * tileW;                        
                         tileCollisionRect.y = j * tileW;
@@ -587,7 +435,7 @@ int main(int argc, char* argv[]) {
             {
                 for (int j = playerRect.y / tileW; j <= (playerRect.y + playerHeight - 1) / tileW; j++)
                 {
-                    if (TestMap::m_mapArray[j][i] % 2 == 0)
+                    if (testMap.m_mapArray[j][i] % 2 == 0)
                     {
 
                         tileCollisionRect.x = i * tileW;
@@ -642,9 +490,9 @@ int main(int argc, char* argv[]) {
             {
                 for (int j = 0; j <= (resH / tileW) + 1; j++)
                 {
-                    if (TestMap::m_mapArray[cameraY / tileW + j][cameraX / tileW + i] != 1)
+                    if (testMap.m_mapArray[cameraY / tileW + j][cameraX / tileW + i] != 1)
                     {
-                        if (TestMap::m_mapArray[cameraY / tileW + j][cameraX / tileW + i] == 0)
+                        if (testMap.m_mapArray[cameraY / tileW + j][cameraX / tileW + i] == 0)
                         {
                             textureGround.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
                             textureGround.render(renderer);
@@ -652,7 +500,7 @@ int main(int argc, char* argv[]) {
                             
 
                         }
-                        else if (TestMap::m_mapArray[cameraY / tileW + j][cameraX / tileW + i] == 6)
+                        else if (testMap.m_mapArray[cameraY / tileW + j][cameraX / tileW + i] == 6)
                         {
                             textureSpikes.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
                             textureSpikes.render(renderer);
@@ -664,10 +512,10 @@ int main(int argc, char* argv[]) {
             if ((playerRect.y - cameraY) > (resH * .6)) 
             {
                 cameraY += ((playerRect.y - cameraY) - (resH * .6));                
-                //gonna need a big fat refactor to point at current level arrays
-                if (cameraY > (sizeof TestMap::m_mapArray / sizeof TestMap::m_mapArray[0]) * tileW - resH)
+                
+                if (cameraY > (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH)
                 {
-                    cameraY = (sizeof TestMap::m_mapArray / sizeof TestMap::m_mapArray[0]) * tileW - resH;
+                    cameraY = (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH;
                 }
             }
 
@@ -686,9 +534,9 @@ int main(int argc, char* argv[]) {
             {
                 cameraX += ((playerRect.x + playerWidth / 2 -cameraX) - (resW / 2));
                 //gonna need a big fat refactor to point at current level arrays
-                if (cameraX > (sizeof TestMap::m_mapArray[0] / sizeof(int)) * tileW - resW)
+                if (cameraX > (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW)
                 {
-                    cameraX = (sizeof TestMap::m_mapArray[0] / sizeof(int)) * tileW - resW;
+                    cameraX = (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW;
                 }
             }
 
@@ -706,33 +554,32 @@ int main(int argc, char* argv[]) {
             playerDrawingRect.y = playerRect.y - cameraY;
 
             SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
-            if (aimXDir > JOYSTICK_DEAD_ZONE || aimXDir < -JOYSTICK_DEAD_ZONE  ||
-                aimYDir > JOYSTICK_DEAD_ZONE || aimYDir < -JOYSTICK_DEAD_ZONE)
+            if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
+                controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
             {
-                SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (aimXDir), playerRect.y + (aimYDir));
+                SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (controlsManager.aimXDir), playerRect.y + (controlsManager.aimYDir));
             }
             SDL_RenderFillRect(renderer, &playerDrawingRect);
         }
 
         // Finally show what we've drawn
         SDL_RenderPresent(renderer);
+        framesDrawnSinceLastFpsCheck++;
+        if (framesDrawnSinceLastFpsCheck == 10 && showFps) {
+            std::cout << "FPS: " << (10000.0 / (float)(SDL_GetTicks64() - lastFpsCalcTime)) <<  std::endl;
+            lastFpsCalcTime = SDL_GetTicks64();
+            framesDrawnSinceLastFpsCheck = 0;
+        }
 
-        xDirLast = xDir;
+        controlsManager.xDirLast = controlsManager.xDir;
 
-        /*std::cout << "playerRect position: " << std::endl;
-        std::cout << "x: " << playerRect.x << std::endl;
-        std::cout << "y: " << playerRect.y << std::endl;
-
-        std::cout << "camera position: " << std::endl;
-        std::cout << "x: " << cameraX << std::endl;
-        std::cout << "y: " << cameraY << std::endl;*/
         lastPhysicsUpdate = SDL_GetTicks64();
     }
 
 
     //Close game controller
-    SDL_JoystickClose(gameController);
-    gameController = NULL;
+    SDL_JoystickClose(controlsManager.gameController);
+    controlsManager.gameController = NULL;
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
