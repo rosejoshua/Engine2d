@@ -36,7 +36,7 @@ ControlsManager::~ControlsManager()
 {
 }
 
-void ControlsManager::handleJoyAxisMotion(SDL_Event event)
+void ControlsManager::handleJoyAxisMotion(SDL_Event &event)
 {
     //Motion on controller 0
     if (event.jaxis.which == 0)
@@ -110,7 +110,7 @@ void ControlsManager::handleJoyAxisMotion(SDL_Event event)
 
 }
 
-void ControlsManager::handleJoyButtonDown(SDL_Event event)
+void ControlsManager::handleJoyButtonDown(SDL_Event &event)
 {
     if (event.jbutton.button == 0) {
         button0Down = true;
@@ -166,7 +166,7 @@ void ControlsManager::handleJoyButtonDown(SDL_Event event)
     }
 }
 
-void ControlsManager::handleJoyButtonUp(SDL_Event event)
+void ControlsManager::handleJoyButtonUp(SDL_Event &event)
 {
     if (event.jbutton.button == 0) {
         button0Down = false;

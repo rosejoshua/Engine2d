@@ -36,8 +36,8 @@ public:
 	bool button12Down;
 	bool canJump;
 
-	void handleJoyAxisMotion(SDL_Event event);
-	void handleJoyButtonDown(SDL_Event event);
-	void handleJoyButtonUp(SDL_Event event);
+	void handleJoyAxisMotion(SDL_Event &event);
+	void handleJoyButtonDown(SDL_Event &event);
+	void handleJoyButtonUp(SDL_Event &event);
 };
 

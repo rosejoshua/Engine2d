@@ -13,80 +13,41 @@
 #include "TextureTextRectangle.hpp"
 #include "TestMap.hpp"
 #include "ControlsManager.hpp"
+#include "PlayerPhysicsManager.hpp"
 
 int main(int argc, char* argv[]) {
 
     SDL_Window* window = nullptr;
     TestMap testMap;
     ControlsManager controlsManager;
-    int resW = 2500;
-    int resH = 1400;
+
+    const std::string gameTitleString = "MOIRÈ";
+    
+    int resW = 2560;
+    int resH = 1440;
     int tileW = 60;
-    int playerHeight = tileW*2.5;
-    int playerWidth = tileW*1.3;
+
+    int playerHeight = tileW * 2.5;
+    int playerWidth = tileW * 1.3;
+
+    PlayerPhysicsManager playerPhysicsManager;
+    playerPhysicsManager.setModifiers(playerHeight);
 
     int cameraX = 0;
     int cameraY = 0;
 
-    const float jumpVelocity = playerHeight/-40.0;
-    //const float horVelModPlayer = 0.5;
-    const float horVelModPlayerRunSprint = playerHeight/1000.0;
-    const float horVelModPlayerWalk = playerHeight / 4000.0;
-    //gravity per tick
-    const float gravityModifier = playerHeight/9000.0;
-    const float maxWalkVelocity = playerHeight / 170.0;
-    const float maxRunVelocity = playerHeight / 80.0;
-    const float maxSprintVelocity = playerHeight / 50.0;
-
-    Uint64 lastPhysicsUpdate = SDL_GetTicks64();
+    //Uint64 lastPhysicsUpdate = SDL_GetTicks64();
     Uint64 lastFpsCalcTime = SDL_GetTicks64();
     int framesDrawnSinceLastFpsCheck = 0;
     bool showFps = true;
-
-    //TestMap *testMap = new TestMap();
-    
-    //Analog joystick dead zone
-    //const int JOYSTICK_DEAD_ZONE = 5000;
-    //const int WALK_SPRINT_TRANSITION = 16000;
-    //SDL_Joystick* gameController = NULL;
-    float yVelocity = 0.0;
-    float xVelocity = 0.0;
 
     bool gameIsRunning = true;
     bool showMenu = true;
     int selectedMenuItem = 1;
     bool gameStarted = false;
 
-    //joy left analog stick direction reduced to int from -3 to 3
-    //int xDir = 0;
-    //int xDirLast = 0;
-    //int yDir = 0;
-
-    //bool for if right analog stick aiming is taking place to draw aim line for testing
-    //bool isAiming = false;
-
-    //making possibly stupid assumption that asking for the aim direction before drawing/detecting collision is slower than storing last known direction in an int. Since using aim point CHANGE
-    //events to update aiming...we don't want to stop drawing aimpoints because events stop...player could still be aiming but not moving the aim analog stick
-    //Sint16 aimXDir = 0;
-    //Sint16 aimYDir = 0;
-
+    //the tile used as the reference for checking the tiles to the left of for collision.
     int tilePastPlayerRect = 0;
-
-    //bool button0Down = false;
-    //bool button1Down = false;
-    //bool button2Down = false;
-    //bool button3Down = false;
-    //bool button4Down = false;
-    //bool button5Down = false;
-    //bool button6Down = false;
-    //bool button7Down = false;
-    //bool button8Down = false;
-    //bool button9Down = false;
-    //bool button10Down = false;
-    //bool button11Down = false;
-    //bool button12Down = false;
-
-    //bool canJump = true;
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
         std::cout << "SDL could not be initialized: " <<
@@ -112,16 +73,15 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    window = SDL_CreateWindow("Pew Pew Pew", SDL_WINDOWPOS_CENTERED, 
-        SDL_WINDOWPOS_CENTERED, resW, resH, 0);
+    window = SDL_CreateWindow("Moire: THE GAME!", 0, 0, resW, resH,
+        SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
 
     if (window == NULL) {
         // In the case that the window could not be made...
         std::cout << "Could not create window: " << SDL_GetError();
     }
 
-    //static necessary here?
-    static SDL_Renderer* renderer = nullptr;
+    SDL_Renderer* renderer = nullptr;
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
 
     if (TTF_Init() == -1) {
@@ -142,23 +102,23 @@ int main(int argc, char* argv[]) {
     }
 
     // Texture Asset Creation
-    TextureTextRectangle menuTitle = TextureTextRectangle(renderer, "PEW PEW PEW", titleMenuFont, 255, 255, 255);
-    menuTitle.SetRectangleProperties(((int)(resW / 1.4)), (resH / 3), ((int)(resW - (int)(resW / 1.4)) / 2), (resH / 8));
+    TextureTextRectangle menuTitle = TextureTextRectangle(renderer, gameTitleString, titleMenuFont, 255, 255, 255);
+    menuTitle.SetRectangleProperties(((int)(resW / 2.3)), (resH / 4), ((int)(resW - (int)(resW / 2.3)) / 2), (resH / 7));
 
-    TextureTextRectangle menuStart = TextureTextRectangle(renderer, "Start", titleMenuFont, 255, 255, 255);
-    menuStart.SetRectangleProperties(((int)(resW / 4.0 * 5.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 5.0 / 7.0)) / 2), (resH / 1.6));
-    TextureTextRectangle menuStartSelected = TextureTextRectangle(renderer, "Start", titleMenuFont, 255, 0, 0);
-    menuStartSelected.SetRectangleProperties(((int)(resW / 4.0 * 5.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 5.0 / 7.0)) / 2), (resH / 1.6));
+    TextureTextRectangle menuStart = TextureTextRectangle(renderer, "START", titleMenuFont, 255, 255, 255);
+    menuStart.SetRectangleProperties(((int)(resW / 4.0 * 5.0 / 7.0)), (resH / 11), ((int)(resW - (int)(resW / 4.0 * 5.0 / 7.0)) / 2), (resH / 1.6));
+    TextureTextRectangle menuStartSelected = TextureTextRectangle(renderer, "START", titleMenuFont, 255, 0, 0);
+    menuStartSelected.SetRectangleProperties(((int)(resW / 4.0 * 5.0 / 7.0)), (resH / 11), ((int)(resW - (int)(resW / 4.0 * 5.0 / 7.0)) / 2), (resH / 1.6));
 
-    TextureTextRectangle menuOptions = TextureTextRectangle(renderer, "Options", titleMenuFont, 255, 255, 255);
-    menuOptions.SetRectangleProperties(((int)(resW / 4.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0)) / 2), (resH / 1.4));
-    TextureTextRectangle menuOptionsSelected = TextureTextRectangle(renderer, "Options", titleMenuFont, 255, 0, 0);
-    menuOptionsSelected.SetRectangleProperties(((int)(resW / 4.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0)) / 2), (resH / 1.4));
+    TextureTextRectangle menuOptions = TextureTextRectangle(renderer, "OPTIONS", titleMenuFont, 255, 255, 255);
+    menuOptions.SetRectangleProperties(((int)(resW / 4.0)), (resH / 11), ((int)(resW - (int)(resW / 4.0)) / 2), (resH / 1.4));
+    TextureTextRectangle menuOptionsSelected = TextureTextRectangle(renderer, "OPTIONS", titleMenuFont, 255, 0, 0);
+    menuOptionsSelected.SetRectangleProperties(((int)(resW / 4.0)), (resH / 11), ((int)(resW - (int)(resW / 4.0)) / 2), (resH / 1.4));
 
-    TextureTextRectangle menuQuit = TextureTextRectangle(renderer, "Quit", titleMenuFont, 255, 255, 255);
-    menuQuit.SetRectangleProperties(((int)(resW / 4.0 * 4.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 4.0 / 7.0)) / 2), (resH / 1.23));
-    TextureTextRectangle menuQuitSelected = TextureTextRectangle(renderer, "Quit", titleMenuFont, 255, 0, 0);
-    menuQuitSelected.SetRectangleProperties(((int)(resW / 4.0 * 4.0 / 7.0)), (resH / 9), ((int)(resW - (int)(resW / 4.0 * 4.0 / 7.0)) / 2), (resH / 1.23));
+    TextureTextRectangle menuQuit = TextureTextRectangle(renderer, "QUIT", titleMenuFont, 255, 255, 255);
+    menuQuit.SetRectangleProperties(((int)(resW / 4.0 * 4.0 / 7.0)), (resH / 11), ((int)(resW - (int)(resW / 4.0 * 4.0 / 7.0)) / 2), (resH / 1.25));
+    TextureTextRectangle menuQuitSelected = TextureTextRectangle(renderer, "QUIT", titleMenuFont, 255, 0, 0);
+    menuQuitSelected.SetRectangleProperties(((int)(resW / 4.0 * 4.0 / 7.0)), (resH / 11), ((int)(resW - (int)(resW / 4.0 * 4.0 / 7.0)) / 2), (resH / 1.25));
 
     TextureRectangle textureBackgroundSky = TextureRectangle(renderer, "./images/TestBackgroundTile.bmp");
     TextureRectangle textureGround = TextureRectangle(renderer, "./images/ground.bmp");
@@ -204,7 +164,7 @@ int main(int argc, char* argv[]) {
     // Main application loop
     while (gameIsRunning) 
     {   
-        while (SDL_GetTicks64() - lastPhysicsUpdate < 6) {}
+        while (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate < 6) {}
         SDL_Event event;
 
         // (1) Handle Input
@@ -246,12 +206,6 @@ int main(int argc, char* argv[]) {
                     showMenu = true;
                     gameStarted = false;
                 }
-
-                if (event.key.keysym.sym == SDLK_SPACE) 
-                {
-                    yVelocity += jumpVelocity;
-                    playerRect.y += (int)yVelocity;
-                }
             }
             else if (event.type == SDL_JOYAXISMOTION)
             {
@@ -270,108 +224,7 @@ int main(int argc, char* argv[]) {
 
         // (2) Handle Updates
         // grid origin is top left of screen...
-        
-        //add jump to velocity
-        if (controlsManager.button4Down && controlsManager.canJump) {
-            yVelocity += jumpVelocity;
-            controlsManager.canJump = false;
-        }
-        else if (!controlsManager.button4Down && !controlsManager.canJump && yVelocity < 0)
-        {
-            yVelocity /= 0.25*(float)(SDL_GetTicks64() - lastPhysicsUpdate);
-        }
-
-        //move player position on x axis based on xVelocity        
-        if (controlsManager.xDir < 0 && controlsManager.xDirLast <= 0)
-        {
-            if (controlsManager.button8Down) {
-                if (xVelocity > -maxSprintVelocity)
-                {
-                    xVelocity -= horVelModPlayerRunSprint;
-                    if (xVelocity < -maxSprintVelocity)
-                    {
-                        xVelocity = -maxSprintVelocity;
-                    }
-                }
-            }
-            else if (controlsManager.xDir == -2)
-            {
-                if (xVelocity > -maxRunVelocity)
-                {
-                    xVelocity -= horVelModPlayerRunSprint;
-                    if (xVelocity < -maxRunVelocity)
-                    {
-                        xVelocity = -maxRunVelocity;
-                    }
-                }
-                else
-                {
-                    xVelocity = -maxRunVelocity;
-                }
-            }
-            else
-            {
-                if (xVelocity > -maxWalkVelocity)
-                {
-                    xVelocity -= horVelModPlayerWalk;
-                    if (xVelocity < -maxWalkVelocity)
-                    {
-                        xVelocity = -maxWalkVelocity;
-                    }
-                }
-                else
-                {
-                    xVelocity = -maxWalkVelocity;
-                }
-            }
-        }
-        else if (controlsManager.xDir > 0 && controlsManager.xDirLast >= 0)
-        {
-            if (controlsManager.button8Down) {
-                if (xVelocity < maxSprintVelocity)
-                {
-                    xVelocity += horVelModPlayerRunSprint;
-                    if (xVelocity > maxSprintVelocity)
-                    {
-                        xVelocity = maxSprintVelocity;
-                    }
-                }
-            }
-            else if (controlsManager.xDir == 2)
-            {
-                if (xVelocity < maxRunVelocity)
-                {
-                    xVelocity += horVelModPlayerRunSprint;
-                    if (xVelocity > maxRunVelocity)
-                    {
-                        xVelocity = maxRunVelocity;
-                    }
-                }
-                else
-                {
-                    xVelocity = maxRunVelocity;
-                }
-            }
-            else
-            {
-                if (xVelocity < maxWalkVelocity)
-                {
-                    xVelocity += horVelModPlayerWalk;
-                    if (xVelocity > maxWalkVelocity)
-                    {
-                        xVelocity = maxWalkVelocity;
-                    }
-                }
-                else
-                {
-                    xVelocity = maxWalkVelocity;
-                }
-            }
-        }
-        else {
-            xVelocity /= 0.25 * (float)(SDL_GetTicks64() - lastPhysicsUpdate);
-        }
-        
+        playerPhysicsManager.updatePlayerVelocities(controlsManager);
 
         if (gameStarted) {
 
@@ -387,7 +240,7 @@ int main(int argc, char* argv[]) {
             {
                 if (i == tilePastPlayerRect) 
                 {
-                    yVelocity += gravityModifier * (SDL_GetTicks64() - lastPhysicsUpdate);
+                    playerPhysicsManager.yVelocity += playerPhysicsManager.gravityModifier * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate);
                     controlsManager.canJump = false;
                 }
                 else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
@@ -395,13 +248,13 @@ int main(int argc, char* argv[]) {
                     if (controlsManager.button4Down == false)
                     {
                         controlsManager.canJump = true;
-                        yVelocity = 0.0;
+                        playerPhysicsManager.yVelocity = 0.0;
                     }
                     break;
                 }
             }
             
-            playerRect.y += (int)(yVelocity * (SDL_GetTicks64() - lastPhysicsUpdate));
+            playerRect.y += (int)(playerPhysicsManager.yVelocity * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate));
             
             
             for (int i = playerRect.x/tileW; i <= (playerRect.x + playerWidth -1) / tileW ; i++)
@@ -418,18 +271,18 @@ int main(int argc, char* argv[]) {
                         if (prevPlayerRect.y < playerRect.y)
                         {
                             playerRect.y -= collisionIntersectionRect.h;
-                            yVelocity = 0.0;
+                            playerPhysicsManager.yVelocity = 0.0;
                         }
                         else if (prevPlayerRect.y > playerRect.y)
                         {
                             playerRect.y += collisionIntersectionRect.h;
-                            yVelocity = 0.0;
+                            playerPhysicsManager.yVelocity = 0.0;
                         }
                     }
                 }
             }
 
-            playerRect.x += (int)(xVelocity * (SDL_GetTicks64() - lastPhysicsUpdate));
+            playerRect.x += (int)(playerPhysicsManager.xVelocity * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate));
 
             for (int i = playerRect.x / tileW; i <= (playerRect.x + playerWidth - 1) / tileW; i++)
             {
@@ -447,12 +300,12 @@ int main(int argc, char* argv[]) {
                         if (prevPlayerRect.x < playerRect.x)
                         {
                             playerRect.x -= collisionIntersectionRect.w;
-                            xVelocity = 0.0;
+                            playerPhysicsManager.xVelocity = 0.0;
                         }
                         else if (prevPlayerRect.x > playerRect.x)
                         {
                             playerRect.x += collisionIntersectionRect.w;
-                            xVelocity = 0.0;
+                            playerPhysicsManager.xVelocity = 0.0;
                         }
                     }
                 }
@@ -533,7 +386,7 @@ int main(int argc, char* argv[]) {
             if ((playerRect.x + playerWidth / 2 - cameraX) > (resW /2))
             {
                 cameraX += ((playerRect.x + playerWidth / 2 -cameraX) - (resW / 2));
-                //gonna need a big fat refactor to point at current level arrays
+                
                 if (cameraX > (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW)
                 {
                     cameraX = (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW;
@@ -573,7 +426,7 @@ int main(int argc, char* argv[]) {
 
         controlsManager.xDirLast = controlsManager.xDir;
 
-        lastPhysicsUpdate = SDL_GetTicks64();
+        playerPhysicsManager.lastPhysicsUpdate = SDL_GetTicks64();
     }
 
 
