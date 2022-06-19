@@ -30,13 +30,17 @@ ControlsManager::ControlsManager()
 	bool button12Down = false;
 
 	bool canJump = true;
+
+    lastMenuItemChangeTime = SDL_GetTicks64();
 }
 
 ControlsManager::~ControlsManager()
 {
+    gameController = NULL;
+    SDL_JoystickClose(gameController);
 }
 
-void ControlsManager::handleJoyAxisMotion(SDL_Event &event)
+void ControlsManager::handleJoyAxisMotion(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning)
 {
     //Motion on controller 0
     if (event.jaxis.which == 0)
@@ -107,14 +111,25 @@ void ControlsManager::handleJoyAxisMotion(SDL_Event &event)
 
     }
 
-
 }
 
-void ControlsManager::handleJoyButtonDown(SDL_Event &event)
+void ControlsManager::handleJoyButtonDown(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning)
 {
     if (event.jbutton.button == 0) {
         button0Down = true;
         std::cout << "button 0 pressed" << std::endl;
+
+        if (showMenu)
+        {
+            if (selectedMenuItem == 1) {
+                showMenu = false;
+                gameStarted = true;
+            }
+            else if (selectedMenuItem == 2)
+                std::cout << "Options Menu Selected Without Implementation" << std::endl;
+            else if (selectedMenuItem == 3)
+                gameIsRunning = false;
+        }
     }
     else if (event.jbutton.button == 1) {
         button1Down = true;
@@ -143,6 +158,24 @@ void ControlsManager::handleJoyButtonDown(SDL_Event &event)
     else if (event.jbutton.button == 7) {
         button7Down = true;
         std::cout << "button 7 pressed" << std::endl;
+
+        if (showMenu)
+        {
+            if (selectedMenuItem == 1) {
+                showMenu = false;
+                gameStarted = true;
+            }
+            else if (selectedMenuItem == 2)
+                std::cout << "Options Menu Selected Without Implementation" << std::endl;
+            else if (selectedMenuItem == 3)
+                gameIsRunning = false;
+        }
+        else if (gameStarted)
+        {
+            showMenu = true;
+            selectedMenuItem = 1;
+            gameStarted = false;
+        }
     }
     else if (event.jbutton.button == 8) {
         button8Down = true;
@@ -206,5 +239,69 @@ void ControlsManager::handleJoyButtonUp(SDL_Event &event)
     }
     else if (event.jbutton.button == 12) {
         button12Down = false;
+    }
+}
+
+void ControlsManager::handleKeyDown(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning)
+{
+
+    if (gameStarted)
+    {
+        //keyboard controls impl
+        if (event.key.keysym.sym == SDLK_w || event.key.keysym.sym == SDLK_UP)
+            selectedMenuItem--;
+
+        if (event.key.keysym.sym == SDLK_ESCAPE)
+        {
+            showMenu = true;
+            selectedMenuItem = 1;
+            gameStarted = false;
+        }
+    }
+
+    else if (showMenu)
+    {
+        if (event.key.keysym.sym == SDLK_w || event.key.keysym.sym == SDLK_UP)
+            selectedMenuItem--;
+
+        if (event.key.keysym.sym == SDLK_s || event.key.keysym.sym == SDLK_DOWN)
+            selectedMenuItem++;
+
+        if (selectedMenuItem == 0)
+            selectedMenuItem = 3;
+
+        if (selectedMenuItem == 4)
+            selectedMenuItem = 1;
+
+        if (event.key.keysym.sym == SDLK_RETURN || event.key.keysym.sym == SDLK_RETURN2)
+        {
+            if (selectedMenuItem == 1) {
+                showMenu = false;
+                gameStarted = true;
+            }
+            else if (selectedMenuItem == 2)
+                std::cout << "Options Menu Selected Without Implementation" << std::endl;
+            else if (selectedMenuItem == 3)
+                gameIsRunning = false;
+        }
+    }
+
+}
+
+void ControlsManager::initializeControls()
+{
+    //Check for joysticks
+    if (SDL_NumJoysticks() < 1)
+    {
+        std::cout << "Warning: No joysticks connected!" << std::endl;
+    }
+    else
+    {
+        //Load joystick
+        gameController = SDL_JoystickOpen(0);
+        if (gameController == NULL)
+        {
+            std::cout << "Warning: Unable to open game controller! SDL Error: " << std::endl;
+        }
     }
 }

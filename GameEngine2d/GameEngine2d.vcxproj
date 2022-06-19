@@ -144,17 +144,21 @@
   <ItemGroup>
     <ClCompile Include="ControlsManager.cpp" />
     <ClCompile Include="GameEngine2d.cpp" />
+    <ClCompile Include="MenuManager.cpp" />
     <ClCompile Include="PlayerPhysicsManager.cpp" />
     <ClCompile Include="TestMap.cpp" />
     <ClCompile Include="TextureRectangle.cpp" />
-    <ClCompile Include="TextureTextRectangle.cpp" />
+    <ClCompile Include="Weapon.cpp" />
+    <ClCompile Include="WeaponsManager.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="ControlsManager.hpp" />
+    <ClInclude Include="MenuManager.hpp" />
     <ClInclude Include="PlayerPhysicsManager.hpp" />
     <ClInclude Include="TestMap.hpp" />
     <ClInclude Include="TextureRectangle.hpp" />
-    <ClInclude Include="TextureTextRectangle.hpp" />
+    <ClInclude Include="Weapon.hpp" />
+    <ClInclude Include="WeaponsManager.hpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

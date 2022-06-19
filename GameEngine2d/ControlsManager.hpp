@@ -36,8 +36,12 @@ public:
 	bool button12Down;
 	bool canJump;
 
-	void handleJoyAxisMotion(SDL_Event &event);
-	void handleJoyButtonDown(SDL_Event &event);
+	Uint64 lastMenuItemChangeTime;
+
+	void handleJoyAxisMotion(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning);
+	void handleJoyButtonDown(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning);
 	void handleJoyButtonUp(SDL_Event &event);
+	void handleKeyDown(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning);
+	void initializeControls();
 };
 
