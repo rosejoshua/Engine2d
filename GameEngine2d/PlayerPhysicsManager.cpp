@@ -11,7 +11,7 @@ PlayerPhysicsManager::PlayerPhysicsManager()
     maxSprintVelocity = 0.0f;
     yVelocity = 0.0f;
     xVelocity = 0.0f;
-    lastPhysicsUpdate = SDL_GetTicks64();
+    lastPhysicsUpdate = 0;
 }
 
 PlayerPhysicsManager::~PlayerPhysicsManager()
@@ -29,7 +29,7 @@ void PlayerPhysicsManager::setModifiers(int playerHeight)
     maxSprintVelocity = playerHeight / 50.0;
 }
 
-void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager& controlsManager)
+void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManager)
 {
     //add jump to velocity
     if (controlsManager.button4Down && controlsManager.canJump) {
