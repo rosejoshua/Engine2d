@@ -99,6 +99,7 @@ void ControlsManager::handleJoyAxisMotion(SDL_Event& event, bool& showMenu, int&
             }
         }
         //right analog stick X axis motion
+        //normalize to a portion of 1.0 corresponding to the 
         else if (event.jaxis.axis == 2)
         {
             aimXDir = event.jaxis.value;

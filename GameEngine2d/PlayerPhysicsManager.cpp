@@ -12,6 +12,7 @@ PlayerPhysicsManager::PlayerPhysicsManager()
     yVelocity = 0.0f;
     xVelocity = 0.0f;
     lastPhysicsUpdate = 0;
+    maxHorizontalVelocity = 0.0f;
 }
 
 PlayerPhysicsManager::~PlayerPhysicsManager()
@@ -21,30 +22,34 @@ PlayerPhysicsManager::~PlayerPhysicsManager()
 void PlayerPhysicsManager::setModifiers(int playerHeight)
 {
     jumpVelocity = playerHeight / -40.0f;
-    horVelModPlayerRunSprint = playerHeight / 1000.0;
-    horVelModPlayerWalk = playerHeight / 4000.0;
-    gravityModifier = playerHeight / 9000.0;
-    maxWalkVelocity = playerHeight / 170.0;
-    maxRunVelocity = playerHeight / 80.0;
-    maxSprintVelocity = playerHeight / 50.0;
+    horVelModPlayerRunSprint = playerHeight / 1000.0f;
+    horVelModPlayerWalk = playerHeight / 4000.0f;
+    gravityModifier = playerHeight / 9000.0f;
+    maxWalkVelocity = playerHeight / 170.0f;
+    maxRunVelocity = playerHeight / 70.0f;
+    maxSprintVelocity = playerHeight / 40.0f;
+    maxHorizontalVelocity = playerHeight / 30.0;
 }
 
-void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManager)
+void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager *controlsManager)
 {
-    //add jump to velocity
-    if (controlsManager.button4Down && controlsManager.canJump) {
-        yVelocity += jumpVelocity;
-        controlsManager.canJump = false;
-    }
-    else if (!controlsManager.button4Down && !controlsManager.canJump && yVelocity < 0)
+    //todo:Replace with heavy gravity that doesnt depend on negative velocity
+
+    if ((!controlsManager->button4Down) && (!controlsManager->canJump) && yVelocity < 0)
     {
         yVelocity /= 0.25 * (float)(SDL_GetTicks64() - lastPhysicsUpdate);
     }
+    
+    if (controlsManager->button4Down && controlsManager->canJump) 
+    {
+        yVelocity += jumpVelocity;
+        controlsManager->canJump = false;
+    }
 
     //move player position on x axis based on xVelocity        
-    if (controlsManager.xDir < 0 && controlsManager.xDirLast <= 0)
+    if (controlsManager->xDir < 0 && controlsManager->xDirLast <= 0)
     {
-        if (controlsManager.button8Down) {
+        if (controlsManager->button8Down) {
             if (xVelocity > -maxSprintVelocity)
             {
                 xVelocity -= horVelModPlayerRunSprint;
@@ -54,7 +59,7 @@ void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManag
                 }
             }
         }
-        else if (controlsManager.xDir == -2)
+        else if (controlsManager->xDir == -2)
         {
             if (xVelocity > -maxRunVelocity)
             {
@@ -85,9 +90,9 @@ void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManag
             }
         }
     }
-    else if (controlsManager.xDir > 0 && controlsManager.xDirLast >= 0)
+    else if (controlsManager->xDir > 0 && controlsManager->xDirLast >= 0)
     {
-        if (controlsManager.button8Down) {
+        if (controlsManager->button8Down) {
             if (xVelocity < maxSprintVelocity)
             {
                 xVelocity += horVelModPlayerRunSprint;
@@ -97,7 +102,7 @@ void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManag
                 }
             }
         }
-        else if (controlsManager.xDir == 2)
+        else if (controlsManager->xDir == 2)
         {
             if (xVelocity < maxRunVelocity)
             {

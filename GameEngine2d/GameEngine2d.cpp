@@ -14,7 +14,7 @@
 #include "ControlsManager.hpp"
 #include "PlayerPhysicsManager.hpp"
 #include "MenuManager.hpp"
-#include "WeaponsManager.hpp"
+//#include "WeaponsManager.hpp"
 
 int main(int argc, char* argv[]) {
     
@@ -25,7 +25,7 @@ int main(int argc, char* argv[]) {
     int playerWidth = tileW * 1.3;
     int cameraX = 0;
     int cameraY = 0;
-    bool showFps = true;
+    bool showFps = false;
     int framesDrawnSinceLastFpsCheck = 0;
     bool gameIsRunning = true;
     bool showMenu = true;
@@ -51,11 +51,11 @@ int main(int argc, char* argv[]) {
     MenuManager menuManager;
     PlayerPhysicsManager playerPhysicsManager;
     playerPhysicsManager.setModifiers(playerHeight);
-    WeaponsManager weaponsManager;
+    //WeaponsManager weaponsManager;
 
     controlsManager.initializeControls();
 
-    window = SDL_CreateWindow("Moire: THE GAME!", 0, 0, resW, resH,
+    window = SDL_CreateWindow("Moire", 0, 0, resW, resH,
         SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
 
     if (window == NULL) {
@@ -148,9 +148,10 @@ int main(int argc, char* argv[]) {
 
         // (2) Handle Updates
         // grid origin is top left of screen...
-        playerPhysicsManager.updatePlayerVelocities(controlsManager);
-
         if (gameStarted) {
+            playerPhysicsManager.updatePlayerVelocities(controlsManagerPtr);
+            std::cout << "yVelocity: " << playerPhysicsManager.yVelocity << std::endl;
+
             //capture playerPosition
             prevPlayerRect.x = playerRect.x;
             prevPlayerRect.y = playerRect.y;
@@ -162,17 +163,23 @@ int main(int argc, char* argv[]) {
             {
                 if (i == tilePastPlayerRect) 
                 {
+                    //applying gravity here seems out of place, what about heavy gravity?
                     playerPhysicsManager.yVelocity += playerPhysicsManager.gravityModifier * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate);
-                    controlsManager.canJump = false;
+                    //not sure why this is here...but might prevent jumping from being restored when player is colliding
+                    //with solid tile and collision check is exactly when player buttom is on top of below tile?
+                    //controlsManager.canJump = false;
                 }
                 else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
                 {
+                    //Problem with shooting blowback acting weird with button 4 down is here I think
+                    //if (controlsManager.button4Down == false)
                     if (controlsManager.button4Down == false)
                     {
                         controlsManager.canJump = true;
                         playerPhysicsManager.yVelocity = 0.0;
+                        break;
                     }
-                    break;
+                    
                 }
             }
             
@@ -202,6 +209,13 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+            
+            //clamping horizontal speed
+            if (playerPhysicsManager.xVelocity > playerPhysicsManager.maxHorizontalVelocity)
+                playerPhysicsManager.xVelocity = playerPhysicsManager.maxHorizontalVelocity;
+            else if (playerPhysicsManager.xVelocity < -playerPhysicsManager.maxHorizontalVelocity)
+                playerPhysicsManager.xVelocity = -playerPhysicsManager.maxHorizontalVelocity;
+
             playerRect.x += (int)(playerPhysicsManager.xVelocity * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate));
 
             for (int i = playerRect.x / tileW; i <= (playerRect.x + playerWidth - 1) / tileW; i++)
@@ -302,12 +316,19 @@ int main(int argc, char* argv[]) {
             playerDrawingRect.x = playerRect.x - cameraX;
             playerDrawingRect.y = playerRect.y - cameraY;
 
+            
+            //if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
+            //    controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
+            //{
+            //    if (weaponsManager.shoot(&playerPhysicsManager, &controlsManager))
+            //    {
+            //        SDL_SetRenderDrawColor(renderer, 120, 190, 33, 255);
+            //        SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (controlsManager.aimXDir), playerRect.y + (controlsManager.aimYDir));
+            //    }
+            //   
+            //}
+            
             SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
-            if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
-                controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
-            {
-                SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (controlsManager.aimXDir), playerRect.y + (controlsManager.aimYDir));
-            }
             SDL_RenderFillRect(renderer, &playerDrawingRect);
         }
 
@@ -324,7 +345,7 @@ int main(int argc, char* argv[]) {
         playerPhysicsManager.lastPhysicsUpdate = SDL_GetTicks64();
     }
 
-    //Destroy shit
+    //Destroy stuff
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();

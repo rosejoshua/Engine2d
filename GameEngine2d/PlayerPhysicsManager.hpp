@@ -24,13 +24,14 @@ public:
 	float maxWalkVelocity;
 	float maxRunVelocity;
 	float maxSprintVelocity;
+	float maxHorizontalVelocity;
 
 	float yVelocity;
 	float xVelocity;
 
 	Uint64 lastPhysicsUpdate;
 
-	void updatePlayerVelocities(ControlsManager& controlsManager);
+	void updatePlayerVelocities(ControlsManager* controlsManager);
 	void setModifiers(int playerHeight);
 };
 
