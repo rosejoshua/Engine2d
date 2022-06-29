@@ -167,7 +167,7 @@ int main(int argc, char* argv[]) {
                 }
                 else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
                 {
-                    if (controlsManager.button4Down == false)
+                    if (controlsManager.button0Down == false)
                     {
                         controlsManager.canJump = true;
                         playerPhysicsManager.yVelocity = 0.0;

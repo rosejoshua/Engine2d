@@ -32,11 +32,11 @@ void PlayerPhysicsManager::setModifiers(int playerHeight)
 void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManager)
 {
     //add jump to velocity
-    if (controlsManager.button4Down && controlsManager.canJump) {
+    if (controlsManager.button0Down && controlsManager.canJump) {
         yVelocity += jumpVelocity;
         controlsManager.canJump = false;
     }
-    else if (!controlsManager.button4Down && !controlsManager.canJump && yVelocity < 0)
+    else if (!controlsManager.button0Down && !controlsManager.canJump && yVelocity < 0)
     {
         yVelocity /= 0.25 * (float)(SDL_GetTicks64() - lastPhysicsUpdate);
     }
@@ -44,7 +44,7 @@ void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManag
     //move player position on x axis based on xVelocity        
     if (controlsManager.xDir < 0 && controlsManager.xDirLast <= 0)
     {
-        if (controlsManager.button8Down) {
+        if (controlsManager.button2Down) {
             if (xVelocity > -maxSprintVelocity)
             {
                 xVelocity -= horVelModPlayerRunSprint;
@@ -87,7 +87,7 @@ void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManag
     }
     else if (controlsManager.xDir > 0 && controlsManager.xDirLast >= 0)
     {
-        if (controlsManager.button8Down) {
+        if (controlsManager.button2Down) {
             if (xVelocity < maxSprintVelocity)
             {
                 xVelocity += horVelModPlayerRunSprint;
