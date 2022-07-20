@@ -1,4 +1,5 @@
 #pragma once
+
 #include<iostream>
 #include<string>
 #include "SDL.h"
@@ -11,6 +12,7 @@ public:
     int selectedMenuItem;
     MenuManager();
     ~MenuManager();
+
 	TTF_Font* titleMenuFont;
 
     SDL_Surface* menuTitleTextSurfacePtr;

@@ -6,6 +6,9 @@ public:
 	TestMap();
 	~TestMap();
 
-	int m_mapArray[44][80];
+	static const int WIDTH = 50;
+	static const int HEIGHT = 88;
+	int m_mapArray[HEIGHT][WIDTH];
+	
 };
 

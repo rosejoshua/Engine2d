@@ -146,8 +146,10 @@
     <ClCompile Include="GameEngine2d.cpp" />
     <ClCompile Include="MenuManager.cpp" />
     <ClCompile Include="PlayerPhysicsManager.cpp" />
+    <ClCompile Include="ScoreManager.cpp" />
     <ClCompile Include="TestMap.cpp" />
     <ClCompile Include="TextureRectangle.cpp" />
+    <ClCompile Include="TileFactory.cpp" />
     <ClCompile Include="Weapon.cpp" />
     <ClCompile Include="WeaponsManager.cpp" />
   </ItemGroup>
@@ -155,8 +157,10 @@
     <ClInclude Include="ControlsManager.hpp" />
     <ClInclude Include="MenuManager.hpp" />
     <ClInclude Include="PlayerPhysicsManager.hpp" />
+    <ClInclude Include="ScoreManager.hpp" />
     <ClInclude Include="TestMap.hpp" />
     <ClInclude Include="TextureRectangle.hpp" />
+    <ClInclude Include="TileFactory.hpp" />
     <ClInclude Include="Weapon.hpp" />
     <ClInclude Include="WeaponsManager.hpp" />
   </ItemGroup>
