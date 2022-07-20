@@ -139,7 +139,6 @@ int MenuManager::initialize(int resW, int resH, SDL_Renderer* renderer)
 void MenuManager::drawMenu(ControlsManager* controlsManager, SDL_Renderer* renderer)
 {
     // Title Screen
-
     SDL_RenderCopy(renderer, menuTitleTextTexturePtr, NULL, menuTitleTextWrapperPtr);
 
     if (selectedMenuItem == 1)
