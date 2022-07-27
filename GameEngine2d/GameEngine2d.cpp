@@ -10,7 +10,6 @@
 #include <math.h>
 #include <time.h>
 
-#include "TextureRectangle.hpp"
 #include "TestMap.hpp"
 #include "ControlsManager.hpp"
 #include "PlayerPhysicsManager.hpp"
@@ -18,25 +17,27 @@
 #include "WeaponsManager.hpp"
 #include "ScoreManager.hpp"
 #include "TileFactory.hpp"
+#include "TextureToTileMapper.hpp"
+#include "Camera.hpp"
 
 int main(int argc, char* argv[]) {
 
     srand(time(nullptr));
     
-    int resW = 2560;
-    int resH = 1440;
-    int tileW = 60;
+    int resW = 1920;
+    int resH = 1020;
+    int tileW = 30;
     int playerHeight = tileW * 2.5;
     int playerWidth = tileW * 1.3;
-    int cameraX = 0;
-    int cameraY = 0;
-    bool showFps = true;
+    bool showFps = false;
     int framesDrawnSinceLastFpsCheck = 0;
     bool gameIsRunning = true;
     bool showMenu = true;
     bool gameStarted = false;
     int tilePastPlayerRect = 0;
     bool dead = false;
+    int xLookPos = 0;
+    int yLookPos = 0;
     Uint64 horizontalProgress = 0;
 
 
@@ -48,8 +49,6 @@ int main(int argc, char* argv[]) {
     else {
         std::cout << "SDL video system is ready to go!" << std::endl;
     }
-
-
     Uint64 lastFpsCalcTime = SDL_GetTicks64();
     SDL_Window* window = nullptr;
     TestMap testMap;
@@ -61,11 +60,13 @@ int main(int argc, char* argv[]) {
     playerPhysicsManager.setModifiers(playerHeight);
     WeaponsManager weaponsManager;
     TileFactory tileFactory(testMap.HEIGHT, 400, tileW, playerHeight, playerWidth);
+    Camera camera(0 ,0, 0, 0, 30);
+    
 
+    
     controlsManager.initializeControls();
 
-    window = SDL_CreateWindow("THE GAME!", 0, 0, resW, resH,
-        SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("THE GAME!", 10, 10, resW, resH, /*SDL_WINDOW_FULLSCREEN |*/ SDL_WINDOW_OPENGL);
 
     if (window == NULL) {
         // In the case that the window could not be made...
@@ -74,14 +75,9 @@ int main(int argc, char* argv[]) {
 
     SDL_Renderer* renderer = nullptr;
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
-
+    TextureToTileMapper textureToTileMapper(renderer, tileW);
     menuManager.initialize(resW, resH, renderer);
     scoreManager.initialize(resW, resH, renderer);
-    
-    //************GET RID OF TextureRectangle CLASS ASAP**************
-    TextureRectangle textureBackgroundSky = TextureRectangle(renderer, "./images/TestBackgroundTile.bmp");
-    TextureRectangle textureGround = TextureRectangle(renderer, "./images/ground.bmp");
-    TextureRectangle textureSpikes = TextureRectangle(renderer, "./images/spikes.bmp");
 
     // Create a rectangle for player model
     SDL_Rect playerRect;
@@ -114,8 +110,8 @@ int main(int argc, char* argv[]) {
 
     //Create a rectangle strictly for drawing
     SDL_Rect playerDrawingRect;
-    playerDrawingRect.x = playerRect.x - cameraX;
-    playerDrawingRect.y = playerRect.y - cameraY;
+    playerDrawingRect.x = playerRect.x - camera.cameraX;
+    playerDrawingRect.y = playerRect.y - camera.cameraY;
     playerDrawingRect.w = playerRect.w;
     playerDrawingRect.h = playerRect.h;
 
@@ -204,17 +200,25 @@ int main(int argc, char* argv[]) {
                         tileCollisionRect.y = j * tileW;
 
                         SDL_IntersectRect(&playerRect, &tileCollisionRect, &collisionIntersectionRect);
-
-                        if (prevPlayerRect.y < playerRect.y)
+                        //todo: delete this if, just for experimentation
+                        if (testMap.m_mapArray[j][i] != 18 && testMap.m_mapArray[j][i] != 20)
                         {
-                            playerRect.y -= collisionIntersectionRect.h;
-                            playerPhysicsManager.yVelocity = 0.0;
+                            if (prevPlayerRect.y < playerRect.y)
+                            {
+                                playerRect.y -= collisionIntersectionRect.h;
+                                playerPhysicsManager.yVelocity = 0.0;
+                            }
+                            else if (prevPlayerRect.y > playerRect.y)
+                            {
+                                playerRect.y += collisionIntersectionRect.h;
+                                playerPhysicsManager.yVelocity = 0.0;
+                            }
                         }
-                        else if (prevPlayerRect.y > playerRect.y)
+                        else
                         {
-                            playerRect.y += collisionIntersectionRect.h;
-                            playerPhysicsManager.yVelocity = 0.0;
+                            testMap.m_mapArray[j][i] = 1;
                         }
+                        
                     }
                 }
             }
@@ -232,16 +236,23 @@ int main(int argc, char* argv[]) {
 
                         SDL_IntersectRect(&playerRect, &tileCollisionRect, &collisionIntersectionRect);
 
-
-                        if (prevPlayerRect.x < playerRect.x)
+                        //todo: delete this if, just for experimentation
+                        if (testMap.m_mapArray[j][i] != 18 && testMap.m_mapArray[j][i] != 20)
                         {
-                            playerRect.x -= collisionIntersectionRect.w;
-                            playerPhysicsManager.xVelocity = 0.0;
+                            if (prevPlayerRect.x < playerRect.x)
+                            {
+                                playerRect.x -= collisionIntersectionRect.w;
+                                playerPhysicsManager.xVelocity = 0.0;
+                            }
+                            else if (prevPlayerRect.x > playerRect.x)
+                            {
+                                playerRect.x += collisionIntersectionRect.w;
+                                playerPhysicsManager.xVelocity = 0.0;
+                            }
                         }
-                        else if (prevPlayerRect.x > playerRect.x)
+                        else
                         {
-                            playerRect.x += collisionIntersectionRect.w;
-                            playerPhysicsManager.xVelocity = 0.0;
+                            testMap.m_mapArray[j][i] = 1;
                         }
                     }
                 }
@@ -260,28 +271,26 @@ int main(int argc, char* argv[]) {
         if (gameStarted) 
         {
             //moved camera calculations above tile drawing to eliminate bug showing leftmost tiles in array before drawing based on player positon. Hopefully this doesn't cause any issues (so far so good)
-            if ((playerRect.y - cameraY) > (resH * .6))
+            if ((playerRect.y - camera.cameraY) > (resH * .6))
             {
-                cameraY += ((playerRect.y - cameraY) - (resH * .6));
-                if (cameraY > (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH)
-                    cameraY = (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH;
+                camera.cameraY += ((playerRect.y - camera.cameraY) - (resH * .6));
+                if (camera.cameraY > (  (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -30  )
+                    camera.cameraY = ((sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -30;
             }
-            else if ((playerRect.y - cameraY) < (resH * .4))
+            else if ((playerRect.y - camera.cameraY) < (resH * .4))
             {
-                cameraY -= (resH * .4) - (playerRect.y - cameraY);
-                if (cameraY < 0)
-                    cameraY = 0;
+                camera.cameraY -= (resH * .4) - (playerRect.y - camera.cameraY);
+                if (camera.cameraY < 0)
+                    camera.cameraY = 0;
             }
 
-            if ((playerRect.x + playerWidth / 2 - cameraX) > (resW / 2))
+            if ((playerRect.x + playerWidth / 2 - camera.cameraX) > (resW / 2))
             {
-                cameraX += ((playerRect.x + playerWidth / 2 - cameraX) - (resW / 2));
-                if (cameraX > (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW)
-                    cameraX = (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW;
+                camera.cameraX += ((playerRect.x + playerWidth / 2 - camera.cameraX) - (resW / 2));
                 if ((playerRect.x + playerWidth / 2) > (sizeof testMap.m_mapArray[0] / sizeof(int) + 2*tileW + resW / 2))
                 {
                     playerRect.x -= tileW;
-                    cameraX -= tileW;
+                    camera.cameraX -= tileW;
 
                     horizontalProgress++;
                     scoreManager.updateScoreByProgress(horizontalProgress);
@@ -296,72 +305,62 @@ int main(int argc, char* argv[]) {
 
                         }
                     }
-                    testMap.m_mapArray[testMap.HEIGHT - 2][testMap.WIDTH - 2] = 6;
+                    //testMap.m_mapArray[testMap.HEIGHT - 2][testMap.WIDTH - 2] = 6;
                     for (int i = 1; i < testMap.HEIGHT-3; i++)
                     {                        
-/*                        if (rand() % 10 > 8)
-                        {
-                            testMap.m_mapArray[i][testMap.WIDTH - 2] = rand() % 2;
-                        }
-                        else
-                        {
-                            testMap.m_mapArray[i][testMap.WIDTH - 2] = 1;
-                        }  */
                         tileFactory.copyTile(testMap.m_mapArray[i][testMap.WIDTH - 2], i);
                     }
                     tileFactory.cycleTileQueue();
                 }
             }
-            else if ((playerRect.x + playerWidth / 2 - cameraX) < (resW / 2))
+            else if ((playerRect.x + playerWidth / 2 - camera.cameraX) < (resW / 2))
             {
-                cameraX -= (resW / 2) - (playerRect.x + playerWidth / 2 - cameraX);
-                if (cameraX < tileW)
-                    cameraX = tileW;
-            }
-            
-            for (unsigned char i = 0; i <= (resW / tileW) + 1; i++)
-            {
-                for (unsigned char j = 0; j <= (resH / tileW) + 1; j++)
-                {
-                    textureBackgroundSky.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
-                    textureBackgroundSky.render(renderer);
-                }
+                camera.cameraX -= (resW / 2) - (playerRect.x + playerWidth / 2 - camera.cameraX);
             }
 
-            for (int i = 0; i <= (resW / tileW) + 1; i++)
+            //camera bounds checking and corrections
+            if (camera.cameraX < tileW)
+                camera.cameraX = tileW;
+            if (camera.cameraX > (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW)
+                camera.cameraX = (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW;
+
+            for (int i = 0; i < (resW / tileW) + 1; i++)
             {
-                for (int j = 0; j <= (resH / tileW) + 1; j++)
+                //<= necessary for drawing tiles to fill space less than tileW (underbuffering). Added hidden row of tiles to bottom 
+                //to prevent out of range errors accessing bottom row of tiles
+                for (int j = 0; j <= (resH / tileW) ; j++)
                 {
-                    if (testMap.m_mapArray[cameraY / tileW + j][cameraX / tileW + i] != 1)
-                    {
-                        if (testMap.m_mapArray[cameraY / tileW + j][cameraX / tileW + i] == 0)
-                        {
-                            textureGround.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
-                            textureGround.render(renderer);
-                        }
-                        else if (testMap.m_mapArray[cameraY / tileW + j][cameraX / tileW + i] == 6)
-                        {
-                            textureSpikes.setRectangleProperties(tileW, tileW, (i * tileW) - (cameraX % tileW), (j * tileW) - (cameraY % tileW));
-                            textureSpikes.render(renderer);
-                        }
-                    }
+                    textureToTileMapper.drawTile(renderer, testMap.m_mapArray[camera.cameraY / tileW + j][camera.cameraX / tileW + i],
+                        (i* tileW) - (camera.cameraX % tileW),
+                        (j* tileW) - (camera.cameraY % tileW),
+                        SDL_GetTicks64());
                 }
             }
-
 
             //prep rendering of playerRect by subtracting camera location values.
-            playerDrawingRect.x = playerRect.x - cameraX;
-            playerDrawingRect.y = playerRect.y - cameraY;
+            playerDrawingRect.x = playerRect.x - camera.cameraX;
+            playerDrawingRect.y = playerRect.y - camera.cameraY;
 
             scoreManager.drawScore(renderer);
 
-             SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
+            SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
 
-            if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
+            //if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
+            //    controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
+            //{
+            //    SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (controlsManager.aimXDir), playerRect.y + (controlsManager.aimYDir));
+            //}
+
+
+            if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE ||
                 controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
             {
-                SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (controlsManager.aimXDir), playerRect.y + (controlsManager.aimYDir));
+                controlsManager.getNormalizedRightStickDir(&xLookPos, &yLookPos, camera.lookModifierValue);
+                SDL_RenderDrawLine(renderer, playerRect.x - camera.cameraX + (playerWidth / 2), playerRect.y - camera.cameraY + (playerHeight / 3), 
+                    playerRect.x - camera.cameraX + (playerWidth / 2) + xLookPos, playerRect.y - camera.cameraY + (playerHeight / 3) + yLookPos);
             }
+
+
             SDL_RenderFillRect(renderer, &playerDrawingRect);
 
         }

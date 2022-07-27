@@ -6,8 +6,10 @@ public:
 	TestMap();
 	~TestMap();
 
-	static const int WIDTH = 50;
-	static const int HEIGHT = 88;
+	//was 50wide
+	static const int WIDTH = 70;
+	//was 88tall
+	static const int HEIGHT = 200;
 	int m_mapArray[HEIGHT][WIDTH];
 	
 };

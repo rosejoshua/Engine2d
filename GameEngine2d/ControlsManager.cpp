@@ -34,11 +34,30 @@ ControlsManager::ControlsManager()
     lastMenuItemChangeTime = SDL_GetTicks64();
 }
 
+void ControlsManager::getNormalizedRightStickDir(int* xPixels, int* yPixels, double normalizedMaxPixels)
+{
+    if (!(abs(aimXDir) > JOYSTICK_DEAD_ZONE || abs(aimYDir) > JOYSTICK_DEAD_ZONE))
+    {
+        *xPixels = 0;
+        *yPixels = 0;
+        return;
+    }
+
+    int xSign = aimXDir >= 0 ? 1 : -1;
+    int ySign = aimYDir >= 0 ? 1 : -1;
+    Uint64 aimXDirABS = abs(aimXDir);
+    Uint64 aimYDirABS = abs(aimYDir);
+    double shrinkRatio = normalizedMaxPixels / sqrt((double)(aimXDirABS * aimXDirABS + aimYDirABS * aimYDirABS));
+    *xPixels = shrinkRatio * (double)aimXDirABS * (double)xSign;
+    *yPixels = shrinkRatio * (double)aimYDirABS * (double)ySign;
+}
+
 ControlsManager::~ControlsManager()
 {
     gameController = NULL;
     SDL_JoystickClose(gameController);
 }
+
 
 void ControlsManager::handleJoyAxisMotion(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning)
 {
