@@ -64,7 +64,7 @@ int MenuManager::initialize(int resW, int resH, SDL_Renderer* renderer)
         std::cout << "SDL_TTF system ready to go!" << std::endl;
     }
 
-    const std::string gameTitleString = "MOIRÈ";
+    const std::string gameTitleString = "TITLE!";
     titleMenuFont = TTF_OpenFont("./fonts/fette.ttf", 128);
 
     if (titleMenuFont == nullptr) {

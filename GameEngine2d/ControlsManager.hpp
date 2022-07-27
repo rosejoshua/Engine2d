@@ -37,11 +37,13 @@ public:
 	bool canJump;
 
 	Uint64 lastMenuItemChangeTime;
+	Uint64 timeDownFirstPressed;
 
 	void handleJoyAxisMotion(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning);
 	void handleJoyButtonDown(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning);
 	void handleJoyButtonUp(SDL_Event &event);
 	void handleKeyDown(SDL_Event& event, bool& showMenu, int& selectedMenuItem, bool& gameStarted, bool& gameIsRunning);
 	void initializeControls();
+	void getNormalizedRightStickDir(int* xPixels, int* yPixels, double normalizedMaxPixels);
 };
 
