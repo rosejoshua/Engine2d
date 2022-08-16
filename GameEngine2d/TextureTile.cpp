@@ -6,7 +6,7 @@ TextureTile::TextureTile(int tileW)
 	hasAltTransparency = false;
 	collisionAnimation = false;
 	lastDrawTime = SDL_GetTicks64();
-	desiredMillisBetweenAnimations = 100;
+	desiredMillisBetweenAnimationFrames = 100;
 	rectangle.x = 0;
 	rectangle.y = 0;
 	rectangle.w = tileW;

@@ -6,6 +6,7 @@
 
 // C++ Standard Libraries
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <math.h>
 #include <time.h>
@@ -17,11 +18,16 @@
 #include "WeaponsManager.hpp"
 #include "ScoreManager.hpp"
 #include "TileFactory.hpp"
-#include "TextureToTileMapper.hpp"
+#include "TextureToTileMapper.hpp" 
 #include "Camera.hpp"
+#include "MapBuffer.hpp"
+#include "LevelSeed.hpp"
+#include "Bitmap.hpp"
+#include "LevelMap.hpp"
 
 int main(int argc, char* argv[]) {
 
+    const int LEVEL_HEIGHT = 200;
     srand(time(nullptr));
     
     int resW = 1920;
@@ -29,7 +35,7 @@ int main(int argc, char* argv[]) {
     int tileW = 30;
     int playerHeight = tileW * 2.5;
     int playerWidth = tileW * 1.3;
-    bool showFps = false;
+    bool showFps = true;
     int framesDrawnSinceLastFpsCheck = 0;
     bool gameIsRunning = true;
     bool showMenu = true;
@@ -61,12 +67,11 @@ int main(int argc, char* argv[]) {
     WeaponsManager weaponsManager;
     TileFactory tileFactory(testMap.HEIGHT, 400, tileW, playerHeight, playerWidth);
     Camera camera(0 ,0, 0, 0, 30);
-    
-
+    MapBuffer mapBuffer(LEVEL_HEIGHT, tileW);
     
     controlsManager.initializeControls();
 
-    window = SDL_CreateWindow("THE GAME!", 10, 10, resW, resH, /*SDL_WINDOW_FULLSCREEN |*/ SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("THE GAME!", 400, 400, resW, resH, /*SDL_WINDOW_FULLSCREEN |*/ SDL_WINDOW_OPENGL);
 
     if (window == NULL) {
         // In the case that the window could not be made...
@@ -84,7 +89,7 @@ int main(int argc, char* argv[]) {
     playerRect.w = playerWidth;
     playerRect.h = playerHeight;
     //playerRect.x = resW/2 - playerWidth/2 + 2*tileW;
-    playerRect.x = sizeof(testMap.m_mapArray[0]) / sizeof(int) * tileW / 2 - playerRect.w/2;
+    playerRect.x = 1000;
     playerRect.y = tileW;
 
     //Create a second rectangle for player model previous position, necessary for backtracking player position in the event of a collision
@@ -115,8 +120,69 @@ int main(int argc, char* argv[]) {
     playerDrawingRect.w = playerRect.w;
     playerDrawingRect.h = playerRect.h;
 
-    // Infinite loop for our application
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////////////////////////TESTS////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    MyRGB black;
+    black = MyRGB(0, 0, 0);
+    MyRGB white;
+    white = MyRGB(255, 255, 255);
 
+    Bitmap bitmap("levels\\level1.bmp");
+
+    //first row of level bitmap starts with a color coding to identify what each pixel in the 
+    //bitmap corresponds to as a tile
+    vector<MyRGB> colorToTileId;
+
+    for (size_t i = 0; i < bitmap.getWidth() / 3; i++)
+    {
+        colorToTileId.push_back(bitmap.getPixel(i, 0));
+
+        if (bitmap.getPixel(i, 0) != black && bitmap.getPixel(i, 0) != white)
+        {
+            bitmap.setPixel(i, 0, black.r, black.g, black.b);
+            cout << "setting pixel: " << i << ",0 to black" << endl;
+        }
+    }
+
+    LevelMap level1(bitmap.getWidth(), bitmap.getHeight());
+    int tileId = -1;
+
+    //this is stupid because I refused to write my own hash function for a map<MyRGB> way to associate tileIDs with colors from the bitmap, 
+    //doesn't really need to be that fast (hopefully!), only used once when each level loads. 
+    for (int y = 0; y < bitmap.getHeight(); y++)
+    {
+        for (int x = 0; x < bitmap.getWidth(); x++)
+        {
+            for (int i = 0; i < colorToTileId.size(); i++)
+            {
+                if (colorToTileId[i] == bitmap.getPixel(x, y))
+                {
+                    {
+                        tileId = i;
+                        break;
+                    }
+                }
+            }
+            level1.setTileIdFromBitmapArray(y, x, tileId);
+        }
+    }
+
+    //for (auto i : *level1.m_tileIds)
+    //{
+    //    for (auto j : i)
+    //    {
+    //        cout << j << " ";
+    //    }
+    //    cout << endl;
+    //}
+
+
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////END TESTS/////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    // Infinite loop for our application
     // Main application loop
     while (gameIsRunning) 
     {   
@@ -173,11 +239,8 @@ int main(int argc, char* argv[]) {
                     playerPhysicsManager.yVelocity += playerPhysicsManager.gravityModifier * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate);
                     controlsManager.canJump = false;
                 }
-                //else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 6 == 0)
-                //{
-                //    dead = true;
-                //}
-                else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
+                //else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
+                else if ((*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] % 2 == 0)
                 {
                     if (controlsManager.button0Down == false)
                     {
@@ -194,31 +257,26 @@ int main(int argc, char* argv[]) {
             {
                 for (int j = playerRect.y/tileW; j <= (playerRect.y + playerHeight -1) / tileW; j++) 
                 {
-                    if (testMap.m_mapArray[j][i] % 2 == 0)
+                    //if (testMap.m_mapArray[j][i] % 2 == 0)
+                    if ((*level1.m_tileIds)[i][j] % 2 == 0)
                     {
+                        //tileCollisionRect.x = i * tileW;                        
+                        //tileCollisionRect.y = j * tileW;
                         tileCollisionRect.x = i * tileW;                        
                         tileCollisionRect.y = j * tileW;
 
                         SDL_IntersectRect(&playerRect, &tileCollisionRect, &collisionIntersectionRect);
-                        //todo: delete this if, just for experimentation
-                        if (testMap.m_mapArray[j][i] != 18 && testMap.m_mapArray[j][i] != 20)
-                        {
-                            if (prevPlayerRect.y < playerRect.y)
-                            {
-                                playerRect.y -= collisionIntersectionRect.h;
-                                playerPhysicsManager.yVelocity = 0.0;
-                            }
-                            else if (prevPlayerRect.y > playerRect.y)
-                            {
-                                playerRect.y += collisionIntersectionRect.h;
-                                playerPhysicsManager.yVelocity = 0.0;
-                            }
-                        }
-                        else
-                        {
-                            testMap.m_mapArray[j][i] = 1;
-                        }
                         
+                        if (prevPlayerRect.y < playerRect.y)
+                        {
+                            playerRect.y -= collisionIntersectionRect.h;
+                            playerPhysicsManager.yVelocity = 0.0;
+                        }
+                        else if (prevPlayerRect.y > playerRect.y)
+                        {
+                            playerRect.y += collisionIntersectionRect.h;
+                            playerPhysicsManager.yVelocity = 0.0;
+                        }
                     }
                 }
             }
@@ -228,32 +286,28 @@ int main(int argc, char* argv[]) {
             {
                 for (int j = playerRect.y / tileW; j <= (playerRect.y + playerHeight - 1) / tileW; j++)
                 {
-                    if (testMap.m_mapArray[j][i] % 2 == 0)
+                    //if (testMap.m_mapArray[j][i] % 2 == 0)
+                    if ((*level1.m_tileIds)[i][j] % 2 == 0)
                     {
 
+                        //tileCollisionRect.x = i * tileW;
+                        //tileCollisionRect.y = j * tileW;
                         tileCollisionRect.x = i * tileW;
                         tileCollisionRect.y = j * tileW;
 
                         SDL_IntersectRect(&playerRect, &tileCollisionRect, &collisionIntersectionRect);
-
-                        //todo: delete this if, just for experimentation
-                        if (testMap.m_mapArray[j][i] != 18 && testMap.m_mapArray[j][i] != 20)
+                        
+                        if (prevPlayerRect.x < playerRect.x)
                         {
-                            if (prevPlayerRect.x < playerRect.x)
-                            {
-                                playerRect.x -= collisionIntersectionRect.w;
-                                playerPhysicsManager.xVelocity = 0.0;
-                            }
-                            else if (prevPlayerRect.x > playerRect.x)
-                            {
-                                playerRect.x += collisionIntersectionRect.w;
-                                playerPhysicsManager.xVelocity = 0.0;
-                            }
+                            playerRect.x -= collisionIntersectionRect.w;
+                            playerPhysicsManager.xVelocity = 0.0;
                         }
-                        else
+                        else if (prevPlayerRect.x > playerRect.x)
                         {
-                            testMap.m_mapArray[j][i] = 1;
+                            playerRect.x += collisionIntersectionRect.w;
+                            playerPhysicsManager.xVelocity = 0.0;
                         }
+                       
                     }
                 }
             }
@@ -274,8 +328,10 @@ int main(int argc, char* argv[]) {
             if ((playerRect.y - camera.cameraY) > (resH * .6))
             {
                 camera.cameraY += ((playerRect.y - camera.cameraY) - (resH * .6));
-                if (camera.cameraY > (  (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -30  )
-                    camera.cameraY = ((sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -30;
+                //if (camera.cameraY > (  (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -4*tileW  )
+                //    camera.cameraY = ((sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -4*tileW;
+                if (camera.cameraY > (level1.m_height * tileW - resH) - 4 * tileW)
+                    camera.cameraY = (level1.m_height * tileW - resH) - 4 * tileW;
             }
             else if ((playerRect.y - camera.cameraY) < (resH * .4))
             {
@@ -287,31 +343,31 @@ int main(int argc, char* argv[]) {
             if ((playerRect.x + playerWidth / 2 - camera.cameraX) > (resW / 2))
             {
                 camera.cameraX += ((playerRect.x + playerWidth / 2 - camera.cameraX) - (resW / 2));
-                if ((playerRect.x + playerWidth / 2) > (sizeof testMap.m_mapArray[0] / sizeof(int) + 2*tileW + resW / 2))
-                {
-                    playerRect.x -= tileW;
-                    camera.cameraX -= tileW;
+                //if ((playerRect.x + playerWidth / 2) > (sizeof testMap.m_mapArray[0] / sizeof(int) + 2*tileW + resW / 2))
+                //{
+                //    playerRect.x -= tileW;
+                //    camera.cameraX -= tileW;
 
-                    horizontalProgress++;
-                    scoreManager.updateScoreByProgress(horizontalProgress);
+                //    horizontalProgress++;
+                //    scoreManager.updateScoreByProgress(horizontalProgress);
 
-                    //call regen on map array
-                    for (int i = 2; i < testMap.WIDTH - 1; i++)
-                    {
-                        //for (int j = 0; j < sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]; j++)
-                        for (int j = 0; j < testMap.HEIGHT; j++)
-                        {
-                            testMap.m_mapArray[j][i - 1] = testMap.m_mapArray[j][i];
+                //    call regen on map array
+                //    for (int i = 2; i < testMap.WIDTH - 1; i++)
+                //    {
+                //        for (int j = 0; j < sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]; j++)
+                //        for (int j = 0; j < testMap.HEIGHT; j++)
+                //        {
+                //            testMap.m_mapArray[j][i - 1] = testMap.m_mapArray[j][i];
 
-                        }
-                    }
-                    //testMap.m_mapArray[testMap.HEIGHT - 2][testMap.WIDTH - 2] = 6;
-                    for (int i = 1; i < testMap.HEIGHT-3; i++)
-                    {                        
-                        tileFactory.copyTile(testMap.m_mapArray[i][testMap.WIDTH - 2], i);
-                    }
-                    tileFactory.cycleTileQueue();
-                }
+                //        }
+                //    }
+
+                //    for (int i = 1; i < testMap.HEIGHT-3; i++)
+                //    {                        
+                //        tileFactory.copyTile(testMap.m_mapArray[i][testMap.WIDTH - 2], i);
+                //    }
+                //    tileFactory.cycleTileQueue();
+                //}
             }
             else if ((playerRect.x + playerWidth / 2 - camera.cameraX) < (resW / 2))
             {
@@ -321,8 +377,10 @@ int main(int argc, char* argv[]) {
             //camera bounds checking and corrections
             if (camera.cameraX < tileW)
                 camera.cameraX = tileW;
-            if (camera.cameraX > (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW)
-                camera.cameraX = (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW;
+            //if (camera.cameraX > (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW)
+            //    camera.cameraX = (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW;
+            if (camera.cameraX > level1.m_width * tileW - resW - tileW)
+                camera.cameraX = level1.m_width * tileW - resW - tileW;
 
             for (int i = 0; i < (resW / tileW) + 1; i++)
             {
@@ -330,7 +388,11 @@ int main(int argc, char* argv[]) {
                 //to prevent out of range errors accessing bottom row of tiles
                 for (int j = 0; j <= (resH / tileW) ; j++)
                 {
-                    textureToTileMapper.drawTile(renderer, testMap.m_mapArray[camera.cameraY / tileW + j][camera.cameraX / tileW + i],
+                    //textureToTileMapper.drawTile(renderer, testMap.m_mapArray[camera.cameraY / tileW + j][camera.cameraX / tileW + i],
+                    //    (i* tileW) - (camera.cameraX % tileW),
+                    //    (j* tileW) - (camera.cameraY % tileW),
+                    //    SDL_GetTicks64());
+                    textureToTileMapper.drawTile(renderer, (*level1.m_tileIds)[camera.cameraX / tileW + i][camera.cameraY / tileW + j],
                         (i* tileW) - (camera.cameraX % tileW),
                         (j* tileW) - (camera.cameraY % tileW),
                         SDL_GetTicks64());
