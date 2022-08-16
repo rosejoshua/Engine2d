@@ -43,7 +43,7 @@
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <PlatformToolset>v143</PlatformToolset>
-    <CharacterSet>Unicode</CharacterSet>
+    <CharacterSet>MultiByte</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
@@ -117,6 +117,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>D:\dev\cpp\source\repos\GameEngine2d\SDL2_ttf\include;D:\dev\cpp\source\repos\GameEngine2d\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -142,10 +143,15 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Bitmap.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ControlsManager.cpp" />
     <ClCompile Include="GameEngine2d.cpp" />
+    <ClCompile Include="LevelMap.cpp" />
+    <ClCompile Include="LevelSeed.cpp" />
+    <ClCompile Include="MapBuffer.cpp" />
     <ClCompile Include="MenuManager.cpp" />
+    <ClCompile Include="MyRGB.cpp" />
     <ClCompile Include="PlayerPhysicsManager.cpp" />
     <ClCompile Include="ScoreManager.cpp" />
     <ClCompile Include="TestMap.cpp" />
@@ -156,9 +162,16 @@
     <ClCompile Include="WeaponsManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Bitmap.hpp" />
+    <ClInclude Include="BitmapFileHeader.hpp" />
+    <ClInclude Include="BitmapInfoHeader.hpp" />
     <ClInclude Include="Camera.hpp" />
     <ClInclude Include="ControlsManager.hpp" />
+    <ClInclude Include="LevelMap.hpp" />
+    <ClInclude Include="LevelSeed.hpp" />
+    <ClInclude Include="MapBuffer.hpp" />
     <ClInclude Include="MenuManager.hpp" />
+    <ClInclude Include="MyRGB.hpp" />
     <ClInclude Include="PlayerPhysicsManager.hpp" />
     <ClInclude Include="ScoreManager.hpp" />
     <ClInclude Include="TestMap.hpp" />
@@ -167,6 +180,9 @@
     <ClInclude Include="TileFactory.hpp" />
     <ClInclude Include="Weapon.hpp" />
     <ClInclude Include="WeaponsManager.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="levels\level1.bmp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

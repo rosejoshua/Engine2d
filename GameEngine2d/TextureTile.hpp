@@ -19,7 +19,7 @@ public:
 	bool hasAltTransparency;
 	bool collisionAnimation;
 	Uint64 lastDrawTime;
-	int desiredMillisBetweenAnimations;
+	int desiredMillisBetweenAnimationFrames;
 	SDL_Rect rectangle;
 	std::vector<SDL_Texture*> textureVector;
 	void setRectPos(int xPos, int yPos);
