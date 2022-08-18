@@ -4,6 +4,7 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 {
 	int fileIndex = 0;
 	int animationIndex = 0;
+	std::string tileBehaviorFilename = "tileBehaviorInput.txt";
 	TextureTile* textureTilePtr = new TextureTile(tileW);
 	SDL_Surface* tempSurfacePointer = SDL_LoadBMP((imagesDir + std::to_string(fileIndex) + "/" +
 				std::to_string(tileW) + "-" + std::to_string(animationIndex) + ".bmp").c_str());
@@ -25,7 +26,7 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 		{
 			while (tempSurfacePointer != NULL)
 			{
-				SDL_SetColorKey(tempSurfacePointer, SDL_FALSE, SDL_MapRGB(tempSurfacePointer->format, 254, 254, 254));
+				SDL_SetColorKey(tempSurfacePointer, SDL_TRUE, SDL_MapRGB(tempSurfacePointer->format, 255, 255, 255));
 				textureTilePtr->textureVector.push_back(SDL_CreateTextureFromSurface(renderer, tempSurfacePointer));
 				SDL_FreeSurface(tempSurfacePointer);
 				animationIndex++;
@@ -33,8 +34,75 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 					std::to_string(tileW) + "-" + std::to_string(animationIndex) + ".bmp").c_str());
 			}
 			animationIndex = 0;
-			intToTextureTileVector.push_back(textureTilePtr);
-			textureTilePtr = new TextureTile(tileW);
+			//grab tile characteristics from text file in images folder
+			std::ifstream file;
+			file.open(imagesDir + std::to_string(fileIndex) + "/" + tileBehaviorFilename);
+			if (!file)
+			{
+				std::cerr << "failure to open " << tileBehaviorFilename << ", tile behaviors will not be imported!" << std::endl;;
+			}
+			else 
+			{
+				std::string tempString = "";
+				bool tempBool = false;
+				int tempInt = 0;
+
+				//ignoring 2 lines of instructions from tileBehaviorInput.txt
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->isCollision = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->drawsInFront = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->isLethal = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->hasSpecialCharacteristics = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->isAnimated = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->isConsumable = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->isLiquid = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->hasCollisionAnimation = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+
+				textureTilePtr->hasTransformation = (tempString == "true");
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+				tempInt = std::stoi(tempString);
+
+				textureTilePtr->transformationTileIndex = tempInt;
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+				tempInt = std::stoi(tempString);
+
+				textureTilePtr->desiredMillisBetweenAnimationFrames = tempInt;
+
+				file.close();
+
+				std::cout << "WTF " << fileIndex << ", isCollision: " << textureTilePtr->isCollision << std::endl;
+				intToTextureTileVector.push_back(textureTilePtr);
+				textureTilePtr = new TextureTile(tileW);
+			}
+
 		}
 		
 	}
