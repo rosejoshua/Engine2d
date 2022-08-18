@@ -89,6 +89,11 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 				std::getline(file, tempString);
 				tempInt = std::stoi(tempString);
 
+				textureTilePtr->minimumCollisionRatio = tempInt;
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+				tempInt = std::stoi(tempString);
+
 				textureTilePtr->transformationTileIndex = tempInt;
 				std::getline(file, tempString);
 				std::getline(file, tempString);

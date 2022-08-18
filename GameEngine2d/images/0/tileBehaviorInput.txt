@@ -17,6 +17,8 @@ false
 false
 *** [true|false] HAS TRANSFORMATION: turns into different tile after some event calls transform() on the TextureTile ***
 false
+*** [0 to tileWidth] MINIMUM COLLISION RATIO: for items that are smaller than a tile, makes an approximation of where the player would touch the item, value is denominator of ratio of total tile pixels, 0 is dont use ***
+0
 *** [positive integer] TRANSFORMATION TILE INDEX: which TextureTile this will transform to after some event calls transform() on the TextureTile ***
 1
 *** [positive integer, 0 - 255] TRANSPARENCY ALPHA VALUE: 255 is solid, 0 is completely transparent ***
