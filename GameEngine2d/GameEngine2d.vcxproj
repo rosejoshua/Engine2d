@@ -154,7 +154,6 @@
     <ClCompile Include="MyRGB.cpp" />
     <ClCompile Include="PlayerPhysicsManager.cpp" />
     <ClCompile Include="ScoreManager.cpp" />
-    <ClCompile Include="TestMap.cpp" />
     <ClCompile Include="TextureTile.cpp" />
     <ClCompile Include="TextureToTileMapper.cpp" />
     <ClCompile Include="TileFactory.cpp" />
@@ -174,7 +173,6 @@
     <ClInclude Include="MyRGB.hpp" />
     <ClInclude Include="PlayerPhysicsManager.hpp" />
     <ClInclude Include="ScoreManager.hpp" />
-    <ClInclude Include="TestMap.hpp" />
     <ClInclude Include="TextureTile.hpp" />
     <ClInclude Include="TextureToTileMapper.hpp" />
     <ClInclude Include="TileFactory.hpp" />

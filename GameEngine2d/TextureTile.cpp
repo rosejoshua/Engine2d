@@ -2,11 +2,20 @@
 
 TextureTile::TextureTile(int tileW)
 {
+	isCollision = false;
+	drawsInFront = false;
+	isLethal = false;
+	hasSpecialCharacteristics = false;
 	isAnimated = false;
-	hasAltTransparency = false;
-	collisionAnimation = false;
+	isConsumable = false;
+	isLiquid = false;
+	hasCollisionAnimation = false;
+	hasTransformation = false;
+	hasMinimumCollisionRatio = false;
+	transformationTileIndex = 1;
+	transparencyAlphaValue = 255;
+	desiredMillisBetweenAnimationFrames = 30;
 	lastDrawTime = SDL_GetTicks64();
-	desiredMillisBetweenAnimationFrames = 100;
 	rectangle.x = 0;
 	rectangle.y = 0;
 	rectangle.w = tileW;

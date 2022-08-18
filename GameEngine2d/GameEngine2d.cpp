@@ -11,7 +11,6 @@
 #include <math.h>
 #include <time.h>
 
-#include "TestMap.hpp"
 #include "ControlsManager.hpp"
 #include "PlayerPhysicsManager.hpp"
 #include "MenuManager.hpp"
@@ -27,7 +26,6 @@
 
 int main(int argc, char* argv[]) {
 
-    const int LEVEL_HEIGHT = 200;
     srand(time(nullptr));
     
     int resW = 1920;
@@ -44,8 +42,11 @@ int main(int argc, char* argv[]) {
     bool dead = false;
     int xLookPos = 0;
     int yLookPos = 0;
+    int hiddenBottomHeight = 4*tileW;
+    int numUniqueTilesInLevel = 9;
     Uint64 horizontalProgress = 0;
-
+    MyRGB menuBackgroundColor;
+    MyRGB levelBackgroundColor = MyRGB(101, 175, 255);
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK) < 0) {
         std::cout << "SDL could not be initialized: " <<
@@ -57,7 +58,6 @@ int main(int argc, char* argv[]) {
     }
     Uint64 lastFpsCalcTime = SDL_GetTicks64();
     SDL_Window* window = nullptr;
-    TestMap testMap;
     ControlsManager controlsManager;
     ControlsManager* controlsManagerPtr = &controlsManager;
     MenuManager menuManager;
@@ -65,9 +65,7 @@ int main(int argc, char* argv[]) {
     PlayerPhysicsManager playerPhysicsManager;
     playerPhysicsManager.setModifiers(playerHeight);
     WeaponsManager weaponsManager;
-    TileFactory tileFactory(testMap.HEIGHT, 400, tileW, playerHeight, playerWidth);
     Camera camera(0 ,0, 0, 0, 30);
-    MapBuffer mapBuffer(LEVEL_HEIGHT, tileW);
     
     controlsManager.initializeControls();
 
@@ -134,14 +132,14 @@ int main(int argc, char* argv[]) {
     //bitmap corresponds to as a tile
     vector<MyRGB> colorToTileId;
 
-    for (size_t i = 0; i < bitmap.getWidth() / 3; i++)
+    for (size_t i = 0; i < numUniqueTilesInLevel; i++)
     {
         colorToTileId.push_back(bitmap.getPixel(i, 0));
 
         if (bitmap.getPixel(i, 0) != black && bitmap.getPixel(i, 0) != white)
         {
-            bitmap.setPixel(i, 0, black.r, black.g, black.b);
-            cout << "setting pixel: " << i << ",0 to black" << endl;
+            bitmap.setPixel(i, 0, 255, 0, 0);
+            cout << "setting pixel: " << i << ",0 to red" << endl;
         }
     }
 
@@ -240,7 +238,8 @@ int main(int argc, char* argv[]) {
                     controlsManager.canJump = false;
                 }
                 //else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
-                else if ((*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] % 2 == 0)
+                //else if ((*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] % 2 == 0)
+                else if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW]]->isCollision)
                 {
                     if (controlsManager.button0Down == false)
                     {
@@ -258,7 +257,8 @@ int main(int argc, char* argv[]) {
                 for (int j = playerRect.y/tileW; j <= (playerRect.y + playerHeight -1) / tileW; j++) 
                 {
                     //if (testMap.m_mapArray[j][i] % 2 == 0)
-                    if ((*level1.m_tileIds)[i][j] % 2 == 0)
+                    //if ((*level1.m_tileIds)[i][j] % 2 == 0) 
+                    if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isCollision)
                     {
                         //tileCollisionRect.x = i * tileW;                        
                         //tileCollisionRect.y = j * tileW;
@@ -287,7 +287,8 @@ int main(int argc, char* argv[]) {
                 for (int j = playerRect.y / tileW; j <= (playerRect.y + playerHeight - 1) / tileW; j++)
                 {
                     //if (testMap.m_mapArray[j][i] % 2 == 0)
-                    if ((*level1.m_tileIds)[i][j] % 2 == 0)
+                    //if ((*level1.m_tileIds)[i][j] % 2 == 0)
+                    if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isCollision)
                     {
 
                         //tileCollisionRect.x = i * tileW;
@@ -314,24 +315,30 @@ int main(int argc, char* argv[]) {
         }
         
 
-        // (3) Clear and Draw the Screen
-        // Gives us a clear "canvas"
-        SDL_SetRenderDrawColor(renderer, 0, 0, 0, SDL_ALPHA_OPAQUE);
-        SDL_RenderClear(renderer);
-
-        if (showMenu) 
+        if (showMenu)
+        {
+            // (3) Clear and Draw the Screen
+            // Gives us a clear "canvas"
+            SDL_SetRenderDrawColor(renderer, menuBackgroundColor.r, menuBackgroundColor.g, menuBackgroundColor.b, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
             menuManager.drawMenu(controlsManagerPtr, renderer);
+        }
+            
 
         if (gameStarted) 
         {
+            // (3) Clear and Draw the Screen
+            // Gives us a clear "canvas"
+            SDL_SetRenderDrawColor(renderer, levelBackgroundColor.r, levelBackgroundColor.g, levelBackgroundColor.b, SDL_ALPHA_OPAQUE);
+            SDL_RenderClear(renderer);
             //moved camera calculations above tile drawing to eliminate bug showing leftmost tiles in array before drawing based on player positon. Hopefully this doesn't cause any issues (so far so good)
             if ((playerRect.y - camera.cameraY) > (resH * .6))
             {
                 camera.cameraY += ((playerRect.y - camera.cameraY) - (resH * .6));
                 //if (camera.cameraY > (  (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -4*tileW  )
                 //    camera.cameraY = ((sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -4*tileW;
-                if (camera.cameraY > (level1.m_height * tileW - resH) - 4 * tileW)
-                    camera.cameraY = (level1.m_height * tileW - resH) - 4 * tileW;
+                if (camera.cameraY > (level1.m_height * tileW - resH) - hiddenBottomHeight)
+                    camera.cameraY = (level1.m_height * tileW - resH) - hiddenBottomHeight;
             }
             else if ((playerRect.y - camera.cameraY) < (resH * .4))
             {
@@ -405,7 +412,7 @@ int main(int argc, char* argv[]) {
 
             scoreManager.drawScore(renderer);
 
-            SDL_SetRenderDrawColor(renderer, 255, 105, 180, 255);
+            SDL_SetRenderDrawColor(renderer, 255, 105, 180, SDL_ALPHA_OPAQUE);
 
             //if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
             //    controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
@@ -421,10 +428,7 @@ int main(int argc, char* argv[]) {
                 SDL_RenderDrawLine(renderer, playerRect.x - camera.cameraX + (playerWidth / 2), playerRect.y - camera.cameraY + (playerHeight / 3), 
                     playerRect.x - camera.cameraX + (playerWidth / 2) + xLookPos, playerRect.y - camera.cameraY + (playerHeight / 3) + yLookPos);
             }
-
-
             SDL_RenderFillRect(renderer, &playerDrawingRect);
-
         }
 
         // Finally show what we've drawn
