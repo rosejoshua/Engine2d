@@ -24,7 +24,8 @@ public:
 	bool isLiquid;
 	bool hasCollisionAnimation;
 	bool hasTransformation;
-	bool hasMinimumCollisionRatio;
+	//todo:import explanations
+	int minimumCollisionRatio;
 	int transformationTileIndex;
 	int transparencyAlphaValue;
 	int desiredMillisBetweenAnimationFrames;

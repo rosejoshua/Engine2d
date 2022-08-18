@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     int tileW = 30;
     int playerHeight = tileW * 2.5;
     int playerWidth = tileW * 1.3;
-    bool showFps = false;
+    bool showFps = true;
     int framesDrawnSinceLastFpsCheck = 0;
     bool gameIsRunning = true;
     bool showMenu = true;
@@ -281,15 +281,18 @@ int main(int argc, char* argv[]) {
             }
 
 
-            std::cout << "velocity: " << playerPhysicsManager.yVelocity << std::endl;
-            std::cout << "pos before: " << playerRect.y << std::endl;
             playerRect.y += (int)(playerPhysicsManager.yVelocity * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate));
-            std::cout << "pos after: " << playerRect.y << std::endl;
             
             for (int i = playerRect.x/tileW; i <= (playerRect.x + playerWidth -1) / tileW ; i++)
             {
                 for (int j = playerRect.y/tileW; j <= (playerRect.y + playerHeight -1) / tileW; j++) 
                 {
+                    //check if player hit its head on lethal block
+                    //todo:this is going to create a bug if player hits head on lethal at the same time as non-lethal neighbor, will need some special logic 
+                    //to check all tiles, or just stop gravity when player is dead and make spikes non-collision and include below
+                    if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isLethal)
+                        dead = true;
+                    //remove player from collision (immovable) blocks
                     if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isCollision)
                     {
                         tileCollisionRect.x = i * tileW;                        
@@ -335,6 +338,50 @@ int main(int argc, char* argv[]) {
                         }
                        
                     }
+                }
+            }
+            //todo:check standing on lethal tile or water here
+            for (int i = playerRect.x / tileW; i <= (playerRect.x + playerWidth - 1) / tileW; i++)
+            {
+                //this purposfully looks at the pixels just below the player to see if they are standing on lethal.
+                if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW]]->isLethal)
+                    dead = true;
+                //checking in water, only checks bottom right tile of collision matrix
+                if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][(playerRect.y + playerHeight - 1) / tileW]]->isLiquid)
+                    playerPhysicsManager.inWater = true;
+                else
+                {
+                    playerPhysicsManager.inWater = false;
+                }
+            }
+            //check for lethal non-collision tiles and consumables
+            for (int i = playerRect.x / tileW; i <= (playerRect.x + playerWidth - 1) / tileW; i++)
+            {
+                for (int j = playerRect.y / tileW; j <= (playerRect.y + playerHeight - 1) / tileW; j++)
+                {
+                    if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isConsumable)
+                    {
+                        if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->minimumCollisionRatio != 0)
+                        {
+                            tileCollisionRect.x = i * tileW;
+                            tileCollisionRect.y = j * tileW;
+                            SDL_IntersectRect(&playerRect, &tileCollisionRect, &collisionIntersectionRect);
+                            if ((collisionIntersectionRect.w * collisionIntersectionRect.h) >
+                                ((tileW * tileW) / textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->minimumCollisionRatio +
+                                    (tileW * tileW) % textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->minimumCollisionRatio))
+                            {
+                                //todo:call transform() here when complete
+                                (*level1.m_tileIds)[i][j] = textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->transformationTileIndex;
+                            }
+                        }
+                        else
+                        {
+                            //todo:call transform() here when complete
+                            (*level1.m_tileIds)[i][j] = textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->transformationTileIndex;
+                        }
+                    }
+                    else if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isLethal)
+                        dead = true;
                 }
             }
         }
@@ -431,7 +478,9 @@ int main(int argc, char* argv[]) {
 
             scoreManager.drawScore(renderer);
 
-            SDL_SetRenderDrawColor(renderer, 255, 105, 180, SDL_ALPHA_OPAQUE);
+            if (!dead)
+                SDL_SetRenderDrawColor(renderer, 255, 105, 180, SDL_ALPHA_OPAQUE);
+            else SDL_SetRenderDrawColor(renderer, 125, 125, 125, SDL_ALPHA_OPAQUE);
 
             //if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
             //    controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)

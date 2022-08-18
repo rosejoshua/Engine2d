@@ -11,7 +11,7 @@ TextureTile::TextureTile(int tileW)
 	isLiquid = false;
 	hasCollisionAnimation = false;
 	hasTransformation = false;
-	hasMinimumCollisionRatio = false;
+	minimumCollisionRatio = 0;
 	transformationTileIndex = 1;
 	transparencyAlphaValue = 255;
 	desiredMillisBetweenAnimationFrames = 30;
