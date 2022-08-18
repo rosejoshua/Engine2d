@@ -33,7 +33,7 @@ int main(int argc, char* argv[]) {
     int tileW = 30;
     int playerHeight = tileW * 2.5;
     int playerWidth = tileW * 1.3;
-    bool showFps = true;
+    bool showFps = false;
     int framesDrawnSinceLastFpsCheck = 0;
     bool gameIsRunning = true;
     bool showMenu = true;
@@ -44,6 +44,7 @@ int main(int argc, char* argv[]) {
     int yLookPos = 0;
     int hiddenBottomHeight = 4*tileW;
     int numUniqueTilesInLevel = 9;
+    float previousToGravityAppliedYVelocity = 0.0f;
     Uint64 horizontalProgress = 0;
     MyRGB menuBackgroundColor;
     MyRGB levelBackgroundColor = MyRGB(101, 175, 255);
@@ -234,11 +235,40 @@ int main(int argc, char* argv[]) {
             {
                 if (i == tilePastPlayerRect) 
                 {
-                    playerPhysicsManager.yVelocity += playerPhysicsManager.gravityModifier * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate);
-                    controlsManager.canJump = false;
+                    //for water gravity, this is to record previous velocity for knowing if we are falling. This is used to correct too much hangtime while very small 
+                    //yVelocity values have no effect on player position due to casting floating points to ints (single pixel resolving of position)
+                    previousToGravityAppliedYVelocity = playerPhysicsManager.yVelocity;
+
+                    if (!playerPhysicsManager.inWater)
+                    {
+                        playerPhysicsManager.yVelocity += playerPhysicsManager.gravityModifier * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate);
+                        if (playerPhysicsManager.yVelocity > playerPhysicsManager.maxDownwardVerticalVelocity)
+                            playerPhysicsManager.yVelocity = playerPhysicsManager.maxDownwardVerticalVelocity;
+                        controlsManager.canJump = false;
+                    }
+                    else
+                    {
+                        playerPhysicsManager.yVelocity += playerPhysicsManager.gravityModifierInWater * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate);
+
+                        //-0.16875 smallest -yVelocity causing position change
+                        //-0.16375 first -yVelocity with no change
+                        //0.16625 first +yVelocity with no change
+                        //0.17125 smallest +yVelocity causing position change
+                        // 
+                        //eliminates excessive hangtime when jumping in water
+                        //todo: relativize these hardcoded values to the playerHeight
+                        //if (playerPhysicsManager.yVelocity < 0.0 && previousToGravityAppliedYVelocity < -0.16375 && playerPhysicsManager.yVelocity >= -0.16375)
+                        if (playerPhysicsManager.yVelocity < 0.0 && previousToGravityAppliedYVelocity < -0.1 && playerPhysicsManager.yVelocity >= -0.1)
+                            playerPhysicsManager.yVelocity = 0.0;
+                        else if (playerPhysicsManager.yVelocity > 0.0 && previousToGravityAppliedYVelocity > 0.1 && playerPhysicsManager.yVelocity <= 0.1)
+                            playerPhysicsManager.yVelocity = 0.0;
+                        else if (playerPhysicsManager.yVelocity > 0.0 && playerPhysicsManager.yVelocity < 0.1 && playerPhysicsManager.yVelocity > previousToGravityAppliedYVelocity)
+                            playerPhysicsManager.yVelocity = 0.1;
+
+                        if (playerPhysicsManager.yVelocity > playerPhysicsManager.maxDownwardVelocityInWater)
+                            playerPhysicsManager.yVelocity = playerPhysicsManager.maxDownwardVelocityInWater;
+                    }
                 }
-                //else if (testMap.m_mapArray[(playerRect.y + playerHeight) / tileW][i] % 2 == 0)
-                //else if ((*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] % 2 == 0)
                 else if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW]]->isCollision)
                 {
                     if (controlsManager.button0Down == false)
@@ -249,19 +279,19 @@ int main(int argc, char* argv[]) {
                     break;
                 }
             }
-            
+
+
+            std::cout << "velocity: " << playerPhysicsManager.yVelocity << std::endl;
+            std::cout << "pos before: " << playerRect.y << std::endl;
             playerRect.y += (int)(playerPhysicsManager.yVelocity * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate));
+            std::cout << "pos after: " << playerRect.y << std::endl;
             
             for (int i = playerRect.x/tileW; i <= (playerRect.x + playerWidth -1) / tileW ; i++)
             {
                 for (int j = playerRect.y/tileW; j <= (playerRect.y + playerHeight -1) / tileW; j++) 
                 {
-                    //if (testMap.m_mapArray[j][i] % 2 == 0)
-                    //if ((*level1.m_tileIds)[i][j] % 2 == 0) 
                     if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isCollision)
                     {
-                        //tileCollisionRect.x = i * tileW;                        
-                        //tileCollisionRect.y = j * tileW;
                         tileCollisionRect.x = i * tileW;                        
                         tileCollisionRect.y = j * tileW;
 
@@ -286,13 +316,8 @@ int main(int argc, char* argv[]) {
             {
                 for (int j = playerRect.y / tileW; j <= (playerRect.y + playerHeight - 1) / tileW; j++)
                 {
-                    //if (testMap.m_mapArray[j][i] % 2 == 0)
-                    //if ((*level1.m_tileIds)[i][j] % 2 == 0)
                     if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isCollision)
                     {
-
-                        //tileCollisionRect.x = i * tileW;
-                        //tileCollisionRect.y = j * tileW;
                         tileCollisionRect.x = i * tileW;
                         tileCollisionRect.y = j * tileW;
 
@@ -335,8 +360,7 @@ int main(int argc, char* argv[]) {
             if ((playerRect.y - camera.cameraY) > (resH * .6))
             {
                 camera.cameraY += ((playerRect.y - camera.cameraY) - (resH * .6));
-                //if (camera.cameraY > (  (sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -4*tileW  )
-                //    camera.cameraY = ((sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]) * tileW - resH) -4*tileW;
+                //hiding bottom set of tiles so that player can fall thru holes in the ground
                 if (camera.cameraY > (level1.m_height * tileW - resH) - hiddenBottomHeight)
                     camera.cameraY = (level1.m_height * tileW - resH) - hiddenBottomHeight;
             }
@@ -384,8 +408,7 @@ int main(int argc, char* argv[]) {
             //camera bounds checking and corrections
             if (camera.cameraX < tileW)
                 camera.cameraX = tileW;
-            //if (camera.cameraX > (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW)
-            //    camera.cameraX = (sizeof testMap.m_mapArray[0] / sizeof(int)) * tileW - resW - tileW;
+
             if (camera.cameraX > level1.m_width * tileW - resW - tileW)
                 camera.cameraX = level1.m_width * tileW - resW - tileW;
 
@@ -395,10 +418,6 @@ int main(int argc, char* argv[]) {
                 //to prevent out of range errors accessing bottom row of tiles
                 for (int j = 0; j <= (resH / tileW) ; j++)
                 {
-                    //textureToTileMapper.drawTile(renderer, testMap.m_mapArray[camera.cameraY / tileW + j][camera.cameraX / tileW + i],
-                    //    (i* tileW) - (camera.cameraX % tileW),
-                    //    (j* tileW) - (camera.cameraY % tileW),
-                    //    SDL_GetTicks64());
                     textureToTileMapper.drawTile(renderer, (*level1.m_tileIds)[camera.cameraX / tileW + i][camera.cameraY / tileW + j],
                         (i* tileW) - (camera.cameraX % tileW),
                         (j* tileW) - (camera.cameraY % tileW),
@@ -420,14 +439,14 @@ int main(int argc, char* argv[]) {
             //    SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (controlsManager.aimXDir), playerRect.y + (controlsManager.aimYDir));
             //}
 
-
-            if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE ||
-                controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
-            {
-                controlsManager.getNormalizedRightStickDir(&xLookPos, &yLookPos, camera.lookModifierValue);
-                SDL_RenderDrawLine(renderer, playerRect.x - camera.cameraX + (playerWidth / 2), playerRect.y - camera.cameraY + (playerHeight / 3), 
-                    playerRect.x - camera.cameraX + (playerWidth / 2) + xLookPos, playerRect.y - camera.cameraY + (playerHeight / 3) + yLookPos);
-            }
+            //Right aimstick line drawing for testing, no use for aim yet.
+            //if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE ||
+            //    controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
+            //{
+            //    controlsManager.getNormalizedRightStickDir(&xLookPos, &yLookPos, camera.lookModifierValue);
+            //    SDL_RenderDrawLine(renderer, playerRect.x - camera.cameraX + (playerWidth / 2), playerRect.y - camera.cameraY + (playerHeight / 3), 
+            //        playerRect.x - camera.cameraX + (playerWidth / 2) + xLookPos, playerRect.y - camera.cameraY + (playerHeight / 3) + yLookPos);
+            //}
             SDL_RenderFillRect(renderer, &playerDrawingRect);
         }
 

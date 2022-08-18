@@ -98,7 +98,6 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 
 				file.close();
 
-				std::cout << "WTF " << fileIndex << ", isCollision: " << textureTilePtr->isCollision << std::endl;
 				intToTextureTileVector.push_back(textureTilePtr);
 				textureTilePtr = new TextureTile(tileW);
 			}
@@ -106,9 +105,9 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 		}
 		
 	}
-	std::cout << "about to exit TTTM ctor," << std::endl;
-	std::cout << "ITTTV size, " << intToTextureTileVector.size() << std::endl;
-	std::cout << "size in each ITTTV element," << std::endl;
+	//std::cout << "about to exit TTTM ctor," << std::endl;
+	//std::cout << "ITTTV size, " << intToTextureTileVector.size() << std::endl;
+	//std::cout << "size in each ITTTV element," << std::endl;
 	for (auto i : intToTextureTileVector)
 	{
 		std::cout << "\tsize: " << i->textureVector.size() << std::endl;

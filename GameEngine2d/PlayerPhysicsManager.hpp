@@ -15,18 +15,24 @@ public:
 	~PlayerPhysicsManager();
 
 	float jumpVelocity;
-
+	float jumpVelocityInWater;
+	float maxUpwardVelocityInWater;
+	float maxDownwardVelocityInWater;
 	float horVelModPlayerRunSprint;
 	float horVelModPlayerWalk;
-
 	//gravity per tick
 	float gravityModifier;
+	float gravityModifierInWater;
 	float maxWalkVelocity;
 	float maxRunVelocity;
 	float maxSprintVelocity;
+	float maxUpwardVerticalVelocity;
+	float maxDownwardVerticalVelocity;
 
 	float yVelocity;
 	float xVelocity;
+
+	bool inWater;
 
 	Uint64 lastPhysicsUpdate;
 
