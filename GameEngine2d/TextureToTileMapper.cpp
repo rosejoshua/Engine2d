@@ -89,12 +89,22 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 				std::getline(file, tempString);
 				tempInt = std::stoi(tempString);
 
+				textureTilePtr->tileTransformationBehaviorIndex = tempInt;
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+				tempInt = std::stoi(tempString);
+
 				textureTilePtr->minimumCollisionRatio = tempInt;
 				std::getline(file, tempString);
 				std::getline(file, tempString);
 				tempInt = std::stoi(tempString);
 
 				textureTilePtr->transformationTileIndex = tempInt;
+				std::getline(file, tempString);
+				std::getline(file, tempString);
+				tempInt = std::stoi(tempString);
+
+				textureTilePtr->transparencyAlphaValue = tempInt;
 				std::getline(file, tempString);
 				std::getline(file, tempString);
 				tempInt = std::stoi(tempString);
@@ -110,9 +120,6 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 		}
 		
 	}
-	//std::cout << "about to exit TTTM ctor," << std::endl;
-	//std::cout << "ITTTV size, " << intToTextureTileVector.size() << std::endl;
-	//std::cout << "size in each ITTTV element," << std::endl;
 	for (auto i : intToTextureTileVector)
 	{
 		std::cout << "\tsize: " << i->textureVector.size() << std::endl;
@@ -130,7 +137,24 @@ TextureToTileMapper::~TextureToTileMapper()
 void TextureToTileMapper::drawTile(SDL_Renderer* renderer, int tileIndex, int xPos, int yPos, Uint64 currentTimeInMillis)
 {
 	intToTextureTileVector[tileIndex]->setRectPos(xPos, yPos);
-	SDL_RenderCopy(renderer, intToTextureTileVector[tileIndex]->textureVector[0], NULL, &intToTextureTileVector[tileIndex]->rectangle);
+	if (intToTextureTileVector[tileIndex]->isAnimated)
+	{
+		SDL_RenderCopy(renderer, intToTextureTileVector[tileIndex]->textureVector[
+			
+			//get animation index using timestamp
+			(SDL_GetTicks64() % (intToTextureTileVector[tileIndex]->textureVector.size() * intToTextureTileVector[tileIndex]->desiredMillisBetweenAnimationFrames)) 
+
+				/
+				
+				(intToTextureTileVector[tileIndex]->desiredMillisBetweenAnimationFrames)
+
+
+		], NULL, &intToTextureTileVector[tileIndex]->rectangle);
+	}
+	else
+	{
+		SDL_RenderCopy(renderer, intToTextureTileVector[tileIndex]->textureVector[0], NULL, &intToTextureTileVector[tileIndex]->rectangle);
+	}
 }
 
 

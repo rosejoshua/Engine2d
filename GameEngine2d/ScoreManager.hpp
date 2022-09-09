@@ -35,6 +35,7 @@ public:
     int initialize(int resW, int resH, SDL_Renderer* renderer);
     void drawScore(SDL_Renderer* renderer);
     void updateScoreByProgress(Uint64 horizontalProgress);
+    void addConsumablePoints(int tileId);
     void padScores();
 };
 

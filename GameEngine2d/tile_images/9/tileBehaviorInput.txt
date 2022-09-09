@@ -1,0 +1,29 @@
+****** WARNING: Do not change layout of this document, only edit the exact values and leave no spaces on value lines, do not make explanations go past one line (text editors soft wrap, thats ok) ******
+*** [true|false] HAS COLLISION: stops player velocity immediately when player contacts it ***
+false
+*** [true|false] DRAWS IN FRONT: draw after rendering player and over top...ex: transparent water, edges of clouds or treetops that can be stood on, etc. ***
+true
+*** [true|false] IS LETHAL: kills player with contact/collision ***
+true
+*** [true|false] HAS SPECIAL CHARACTERISTICS: list true to access the properties listed after this one...so that we don't look at the following unless needed ***
+false
+*** [true|false] IS ANIMATED: uses a sequence of frames that get rotated thru no matter what ***
+false
+*** [true|false] IS CONSUMABLE: coins, hearts, powerups, etc...uses ***
+false
+*** [true|false] IS LIQUID: for applying alternate gravity when player is within tile ***
+true
+*** [true|false] HAS COLLISION ANIMATION: for things like springboards, item consumption animation, p-switches, etc ***
+false
+*** [true|false] HAS TRANSFORMATION: turns into different tile after some event calls transform() on the TextureTile ***
+false
+*** [-2147483648 to 2147483647] TILE TRANSFORMATION BEHAVIOR INDEX: use this to link to methods in the Transformation Manager Class ***
+0
+*** [0 to tileWidth] MINIMUM COLLISION RATIO: for items that are smaller than a tile, makes an approximation of where the player would touch the item, value is denominator of ratio of total tile pixels, 0 is dont use ***
+0
+*** [positive integer] TRANSFORMATION TILE INDEX: which TextureTile this will transform to after some event calls transform() on the TextureTile ***
+1
+*** [positive integer, 0 - 255] TRANSPARENCY ALPHA VALUE: 255 is solid, 0 is completely transparent ***
+255
+*** [positive integer] DESIRED MILLISECONDS BETWEEN ANIMATION FRAMES: number of milliseconds that must pass before the next animation frame is grabbed ***
+30
