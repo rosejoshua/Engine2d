@@ -25,6 +25,7 @@ public:
 	bool hasCollisionAnimation;
 	bool hasTransformation;
 	//todo:import explanations
+	int tileTransformationBehaviorIndex;
 	int minimumCollisionRatio;
 	int transformationTileIndex;
 	int transparencyAlphaValue;

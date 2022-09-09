@@ -16,7 +16,7 @@
 class TextureToTileMapper
 {
 public:
-	const std::string imagesDir = "./images/";
+	const std::string imagesDir = "./tile_images/";
 
 	TextureToTileMapper(SDL_Renderer*& renderer, int tileW);
 	~TextureToTileMapper();

@@ -90,3 +90,9 @@ void ScoreManager::updateScoreByProgress(Uint64 horizontalProgress)
     score += (horizontalProgress - previousHorizontalProgress) * (multiplier * SCORE_BASE);
     previousHorizontalProgress = horizontalProgress;
 }
+
+void ScoreManager::addConsumablePoints(int tileId)
+{
+    if (tileId == 2)
+        score += 100;
+}

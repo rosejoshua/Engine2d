@@ -65,7 +65,7 @@ int MenuManager::initialize(int resW, int resH, SDL_Renderer* renderer)
     }
 
     const std::string gameTitleString = "TITLE!";
-    titleMenuFont = TTF_OpenFont("./fonts/fette.ttf", 128);
+    titleMenuFont = TTF_OpenFont("./fonts/8bitOperatorPlus-Regular.ttf", 128);
 
     if (titleMenuFont == nullptr) {
         std::cout << "Could not load font" << std::endl;
@@ -95,7 +95,7 @@ int MenuManager::initialize(int resW, int resH, SDL_Renderer* renderer)
     menuStartSelectedTextWrapper.x = (resW - (resW / 4.0 * 5.0 / 7.0)) / 2.0;
     menuStartSelectedTextWrapper.y = resH / 1.6;
     menuStartSelectedTextWrapperPtr = &menuStartSelectedTextWrapper;
-    menuStartSelectedTextSurfacePtr = TTF_RenderText_Solid(titleMenuFont, "START", { 255, 0, 0 });
+    menuStartSelectedTextSurfacePtr = TTF_RenderText_Solid(titleMenuFont, "START", { 150, 7, 6 });
     menuStartSelectedTextTexturePtr = SDL_CreateTextureFromSurface(renderer, menuStartSelectedTextSurfacePtr);
     SDL_FreeSurface(menuStartSelectedTextSurfacePtr);
 
@@ -113,7 +113,7 @@ int MenuManager::initialize(int resW, int resH, SDL_Renderer* renderer)
     menuOptionsSelectedTextWrapper.x = (resW - (resW / 4.0)) / 2.0;
     menuOptionsSelectedTextWrapper.y = resH / 1.4;
     menuOptionsSelectedTextWrapperPtr = &menuOptionsSelectedTextWrapper;
-    menuOptionsSelectedTextSurfacePtr = TTF_RenderText_Solid(titleMenuFont, "OPTIONS", { 255, 0, 0 });
+    menuOptionsSelectedTextSurfacePtr = TTF_RenderText_Solid(titleMenuFont, "OPTIONS", { 150, 7, 6 });
     menuOptionsSelectedTextTexturePtr = SDL_CreateTextureFromSurface(renderer, menuOptionsSelectedTextSurfacePtr);
     SDL_FreeSurface(menuOptionsSelectedTextSurfacePtr);
 
@@ -131,7 +131,7 @@ int MenuManager::initialize(int resW, int resH, SDL_Renderer* renderer)
     menuQuitSelectedTextWrapper.x = (resW - (resW / 4.0 * 4.0 / 7.0)) / 2.0;
     menuQuitSelectedTextWrapper.y = resH / 1.25;
     menuQuitSelectedTextWrapperPtr = &menuQuitSelectedTextWrapper;
-    menuQuitSelectedTextSurfacePtr = TTF_RenderText_Solid(titleMenuFont, "QUIT", { 255, 0, 0 });
+    menuQuitSelectedTextSurfacePtr = TTF_RenderText_Solid(titleMenuFont, "QUIT", { 150, 7, 6 });
     menuQuitSelectedTextTexturePtr = SDL_CreateTextureFromSurface(renderer, menuQuitSelectedTextSurfacePtr);
     SDL_FreeSurface(menuQuitSelectedTextSurfacePtr);
 }
