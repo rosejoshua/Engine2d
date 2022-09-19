@@ -33,7 +33,11 @@ static Uint32 audio_len; // remaining length of the sample we have to play
 int main(int argc, char* argv[]) {
 
     srand(time(nullptr));
-    
+    const int horizontalParallaxFactor = 3;
+    const int verticalParallaxFactor = 3;
+    const int numUniqueTilesInLevel = 14;
+    const int cycleLimiter = 8;
+
     int resW = 1920;
     int resH = 1020;
     int tileW = 30;
@@ -50,7 +54,6 @@ int main(int argc, char* argv[]) {
     int xLookPos = 0;
     int yLookPos = 0;
     int hiddenBottomHeight = 4*tileW;
-    int numUniqueTilesInLevel = 11;
     float previousToGravityAppliedYVelocity = 0.0f;
     Uint64 horizontalProgress = 0;
     MyRGB menuBackgroundColor;
@@ -119,7 +122,7 @@ int main(int argc, char* argv[]) {
     //SDL_PauseAudioDevice(m_device,0);
 
     SDL_Renderer* renderer = nullptr;
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED );
     TextureToTileMapper textureToTileMapper(renderer, tileW);
     menuManager.initialize(resW, resH, renderer);
     youDiedManager.initialize(resW, resH, renderer);
@@ -128,7 +131,9 @@ int main(int argc, char* argv[]) {
     // Create a rectangle for player model
     SDL_Rect playerRect;
     playerRect.w = playerWidth;
+    std::cout << playerWidth << " ";
     playerRect.h = playerHeight;
+    std::cout << playerHeight << std::endl;
     //playerRect.x = resW/2 - playerWidth/2 + 2*tileW;
     playerRect.x = 1000;
     playerRect.y = tileW;
@@ -231,6 +236,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+
     //for (auto i : *level1.m_tileIds)
     //{
     //    for (auto j : i)
@@ -251,7 +257,7 @@ int main(int argc, char* argv[]) {
     {   
         //frame capping to about 165hz...will eventually separate physics from capped drawing/display to 
         //hopefully prioritize physics calculations over drawing and not overdraw to prevent shearing on good PCs
-        while (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate < 6) {}
+        while (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate < cycleLimiter) {}
         SDL_Event event;
 
         // (1) Handle Input
@@ -426,6 +432,11 @@ int main(int argc, char* argv[]) {
                 {
                     playerPhysicsManager.inWater = false;
                 }
+
+                //if ((*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 13)
+                //{
+                //    playerPhysicsManager.yVelocity += (2 * playerPhysicsManager.jumpVelocity);
+                //}
             }
             //check for lethal non-collision tiles and consumables
             for (int i = playerRect.x / tileW; i <= (playerRect.x + playerWidth - 1) / tileW; i++)
@@ -551,28 +562,26 @@ int main(int argc, char* argv[]) {
 
             if (camera.cameraX > level1.m_width * tileW - resW - tileW)
                 camera.cameraX = level1.m_width * tileW - resW - tileW;
-            ////Draw background tiles first
-            //for (int i = 0; i < (resW / tileW) + 1; i++)
-            //{
-            //    //[(camera.cameraX / 3) / tileW + (i / 3)][(camera.cameraY / 3) / tileW + (j / 3)]
-            //    for (int j = 0; j <= (resH / tileW); j++)
-            //    {
-
-            //        
-            //        textureToTileMapper.drawTile(renderer, (*background1.m_tileIds)[
-            //            
-            //            ((camera.cameraX / 10 ) + i) % background1.m_width
-            //        
-            //        ][
-            //            
-            //            ((camera.cameraY / 10 ) + j) % background1.m_height
-            //        
-            //        ],
-            //            (i * tileW) - (camera.cameraX % tileW),
-            //            (j * tileW) - (camera.cameraY % tileW),
-            //            SDL_GetTicks64());
-            //    }
-            //}
+            //Draw background tiles first
+            for (int i = 0; i < (resW / tileW) + 1; i++)
+            {
+                //[(camera.cameraX / 3) / tileW + (i / 3)][(camera.cameraY / 3) / tileW + (j / 3)]
+                for (int j = 0; j <= (resH / tileW); j++)
+                {
+                    textureToTileMapper.drawTile(renderer, (*background1.m_tileIds)[
+                        
+                        (((camera.cameraX / horizontalParallaxFactor) / tileW) + i) % background1.m_width
+                    
+                    ][
+                        
+                        (((camera.cameraY / verticalParallaxFactor) / tileW) + j) % background1.m_height
+                    
+                    ],
+                        (i * tileW) - (camera.cameraX/horizontalParallaxFactor % tileW),
+                        (j * tileW) - (camera.cameraY/verticalParallaxFactor % tileW),
+                        SDL_GetTicks64());
+                }
+            }
 
             for (int i = 0; i < (resW / tileW) + 1; i++)
             {
