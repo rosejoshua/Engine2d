@@ -154,8 +154,10 @@
     <ClCompile Include="MenuManager.cpp" />
     <ClCompile Include="MyRGB.cpp" />
     <ClCompile Include="PlayerPhysicsManager.cpp" />
+    <ClCompile Include="PlayerSpriteManager.cpp" />
     <ClCompile Include="ScoreManager.cpp" />
     <ClCompile Include="Sound.cpp" />
+    <ClCompile Include="SpriteManager.cpp" />
     <ClCompile Include="TextureTile.cpp" />
     <ClCompile Include="TextureToTileMapper.cpp" />
     <ClCompile Include="TileFactory.cpp" />
@@ -176,8 +178,10 @@
     <ClInclude Include="MenuManager.hpp" />
     <ClInclude Include="MyRGB.hpp" />
     <ClInclude Include="PlayerPhysicsManager.hpp" />
+    <ClInclude Include="PlayerSpriteManager.hpp" />
     <ClInclude Include="ScoreManager.hpp" />
     <ClInclude Include="Sound.hpp" />
+    <ClInclude Include="SpriteManager.hpp" />
     <ClInclude Include="TextureTile.hpp" />
     <ClInclude Include="TextureToTileMapper.hpp" />
     <ClInclude Include="TileFactory.hpp" />
