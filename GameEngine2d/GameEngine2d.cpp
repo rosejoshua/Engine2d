@@ -25,6 +25,7 @@
 #include "Bitmap.hpp"
 #include "LevelMap.hpp"
 #include "Sound.hpp"
+#include "PlayerSpriteManager.hpp"
 
 // variable declarations
 static Uint8* audio_pos; // global pointer to the audio buffer to be played
@@ -36,7 +37,7 @@ int main(int argc, char* argv[]) {
     const int horizontalParallaxFactor = 3;
     const int verticalParallaxFactor = 3;
     const int numUniqueTilesInLevel = 14;
-    const int cycleLimiter = 8;
+    const int cycleLimiter = 6;
 
     int resW = 1920;
     int resH = 1020;
@@ -161,14 +162,12 @@ int main(int argc, char* argv[]) {
 
     //Create a rectangle strictly for drawing
     SDL_Rect playerDrawingRect;
+    SDL_Rect* p_playerDrawingRect = &playerDrawingRect;
     playerDrawingRect.x = playerRect.x - camera.cameraX;
     playerDrawingRect.y = playerRect.y - camera.cameraY;
     playerDrawingRect.w = playerRect.w;
     playerDrawingRect.h = playerRect.h;
 
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////TESTS////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
     MyRGB black;
     black = MyRGB(0, 0, 0);
     MyRGB white;
@@ -236,20 +235,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-
-    //for (auto i : *level1.m_tileIds)
-    //{
-    //    for (auto j : i)
-    //    {
-    //        cout << j << " ";
-    //    }
-    //    cout << endl;
-    //}
-
-
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    ////////////////////////////////////////////////////////END TESTS/////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    PlayerSpriteManager playerSpriteManager(renderer);
 
     // Infinite loop for our application
     // Main application loop
@@ -344,6 +330,7 @@ int main(int argc, char* argv[]) {
                     if (controlsManager.button0Down == false)
                     {
                         controlsManager.canJump = true;
+                        controlsManager.landing = true;
                         playerPhysicsManager.yVelocity = 0.0;
                     }
                     break;
@@ -605,9 +592,9 @@ int main(int argc, char* argv[]) {
 
             scoreManager.drawScore(renderer);
 
-            if (!dead)
-                SDL_SetRenderDrawColor(renderer, 255, 105, 180, SDL_ALPHA_OPAQUE);
-            else SDL_SetRenderDrawColor(renderer, 125, 125, 125, SDL_ALPHA_OPAQUE);
+            //if (!dead)
+            //    SDL_SetRenderDrawColor(renderer, 255, 105, 180, SDL_ALPHA_OPAQUE);
+            //else SDL_SetRenderDrawColor(renderer, 125, 125, 125, SDL_ALPHA_OPAQUE);
 
             //if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
             //    controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
@@ -623,7 +610,14 @@ int main(int argc, char* argv[]) {
             //    SDL_RenderDrawLine(renderer, playerRect.x - camera.cameraX + (playerWidth / 2), playerRect.y - camera.cameraY + (playerHeight / 3), 
             //        playerRect.x - camera.cameraX + (playerWidth / 2) + xLookPos, playerRect.y - camera.cameraY + (playerHeight / 3) + yLookPos);
             //}
-            SDL_RenderFillRect(renderer, &playerDrawingRect);
+            
+            //SDL_RenderFillRect(renderer, &playerDrawingRect);
+            //testSpriteManager.drawSprite(renderer, p_playerDrawingRect, 0, 0, 0);
+            playerSpriteManager.drawSprite(renderer, 
+            p_playerDrawingRect,
+            (std::abs(playerPhysicsManager.yVelocity) < 1e-4 ? false : true),
+            (std::abs(playerPhysicsManager.xVelocity) < 1e-4) ? 0 : playerPhysicsManager.xVelocity > 0 ? 1 : -1
+            );
         }
 
         // Finally show what we've drawn

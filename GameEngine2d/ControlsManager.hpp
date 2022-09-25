@@ -35,6 +35,7 @@ public:
 	bool button11Down;
 	bool button12Down;
 	bool canJump;
+	bool landing;
 
 	Uint64 lastMenuItemChangeTime;
 	Uint64 timeDownFirstPressed;

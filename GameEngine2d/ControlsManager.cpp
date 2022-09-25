@@ -15,21 +15,23 @@ ControlsManager::ControlsManager()
 	Sint16 aimXDir = 0;
 	Sint16 aimYDir = 0;
 
-	bool button0Down = false;
-	bool button1Down = false;
-	bool button2Down = false;
-	bool button3Down = false;
-	bool button4Down = false;
-	bool button5Down = false;
-	bool button6Down = false;
-	bool button7Down = false;
-	bool button8Down = false;
-	bool button9Down = false;
-	bool button10Down = false;
-	bool button11Down = false;
-	bool button12Down = false;
+	button0Down = false;
+	button1Down = false;
+	button2Down = false;
+	button3Down = false;
+	button4Down = false;
+	button5Down = false;
+	button6Down = false;
+	button7Down = false;
+	button8Down = false;
+	button9Down = false;
+	button10Down = false;
+	button11Down = false;
+	button12Down = false;
 
-	bool canJump = true;
+	canJump = true;
+    landing = false;
+
 
     lastMenuItemChangeTime = SDL_GetTicks64();
 }
@@ -136,7 +138,6 @@ void ControlsManager::handleJoyButtonDown(SDL_Event& event, bool& showMenu, int&
 {
     if (event.jbutton.button == 0) {
         button0Down = true;
-        std::cout << "button 0 pressed" << std::endl;
 
         if (showMenu)
         {
@@ -152,31 +153,24 @@ void ControlsManager::handleJoyButtonDown(SDL_Event& event, bool& showMenu, int&
     }
     else if (event.jbutton.button == 1) {
         button1Down = true;
-        std::cout << "button 1 pressed" << std::endl;
     }
     else if (event.jbutton.button == 2) {
         button2Down = true;
-        std::cout << "button 2 pressed" << std::endl;
     }
     else if (event.jbutton.button == 3) {
         button3Down = true;
-        std::cout << "button 3 pressed" << std::endl;
     }
     else if (event.jbutton.button == 4) {
         button4Down = true;
-        std::cout << "button 4 pressed" << std::endl;
     }
     else if (event.jbutton.button == 5) {
         button5Down = true;
-        std::cout << "button 5 pressed" << std::endl;
     }
     else if (event.jbutton.button == 6) {
         button6Down = true;
-        std::cout << "button 6 pressed" << std::endl;
     }
     else if (event.jbutton.button == 7) {
         button7Down = true;
-        std::cout << "button 7 pressed" << std::endl;
 
         if (showMenu)
         {
@@ -198,23 +192,18 @@ void ControlsManager::handleJoyButtonDown(SDL_Event& event, bool& showMenu, int&
     }
     else if (event.jbutton.button == 8) {
         button8Down = true;
-        std::cout << "button 8 pressed" << std::endl;
     }
     else if (event.jbutton.button == 9) {
         button9Down = true;
-        std::cout << "button 9 pressed" << std::endl;
     }
     else if (event.jbutton.button == 10) {
         button10Down = true;
-        std::cout << "button 10 pressed" << std::endl;
     }
     else if (event.jbutton.button == 11) {
         button11Down = true;
-        std::cout << "button 11 pressed" << std::endl;
     }
     else if (event.jbutton.button == 12) {
         button12Down = true;
-        std::cout << "button 12 pressed" << std::endl;
     }
 }
 
