@@ -143,6 +143,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Background.cpp" />
+    <ClCompile Include="BackgroundManager.cpp" />
     <ClCompile Include="Bitmap.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ControlsManager.cpp" />
@@ -166,6 +168,8 @@
     <ClCompile Include="YouDiedManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Background.hpp" />
+    <ClInclude Include="BackgroundManager.hpp" />
     <ClInclude Include="Bitmap.hpp" />
     <ClInclude Include="BitmapFileHeader.hpp" />
     <ClInclude Include="BitmapInfoHeader.hpp" />
