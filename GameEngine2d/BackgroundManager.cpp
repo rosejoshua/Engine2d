@@ -38,7 +38,7 @@ void BackgroundManager::drawBackground(int cameraX, int cameraY, int resW, int r
 			background1->draw(-((cameraX / parallaxXRatio + cloudParallaxModifier) % background1->width) + background1->width, resH - currentYCheck1);
 	}
 
-	for (size_t i = 0; i < 4; i++)
+	for (size_t i = 0; i < 2; i++)
 	{
 		int currentYCheck2 = background1->inViewYHeight(cameraY, resH, mapHeight, tileW, parallaxYRatio + cloudParallaxModifier, background0->height + i*background1->height);
 		if (currentYCheck2 > 0)

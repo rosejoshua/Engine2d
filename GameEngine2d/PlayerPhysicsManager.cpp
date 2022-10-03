@@ -42,7 +42,7 @@ void PlayerPhysicsManager::setModifiers(int playerHeight)
     maxDownwardVerticalVelocity = playerHeight / 15.0f;
 }
 
-void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManager)
+void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManager, Mix_Chunk* jumpSound)
 {
     if (!inWater)
     {
@@ -53,6 +53,7 @@ void PlayerPhysicsManager::updatePlayerVelocities(ControlsManager &controlsManag
             if (yVelocity < -maxUpwardVerticalVelocity)
                 yVelocity = -maxUpwardVerticalVelocity;
             controlsManager.canJump = false;
+            Mix_PlayChannel(2, jumpSound, 0);
         }
         else if (!controlsManager.button0Down && !controlsManager.canJump && yVelocity < 0)
         {

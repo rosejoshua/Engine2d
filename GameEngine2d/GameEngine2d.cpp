@@ -3,6 +3,7 @@
 // Third-party library
 #include "SDL.h"
 #include "SDL_ttf.h"
+#include "SDL_mixer.h"
 
 // C++ Standard Libraries
 #include <iostream>
@@ -41,8 +42,8 @@ int main(int argc, char* argv[]) {
     const int numUniqueTilesInLevel = 14;
     const int cycleLimiter = 6;
 
-    int resW = 1920;
-    int resH = 1080;
+    int resW = 2560;
+    int resH = 1440;
     int tileW = 30;
     int playerHeight = tileW * 2.5;
     int playerWidth = tileW * 1.3;
@@ -71,6 +72,12 @@ int main(int argc, char* argv[]) {
     else {
         std::cout << "SDL VIDEO, JOYSTICK and AUDIO system is ready to go!" << std::endl;
     }
+
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+    {
+        std::cerr << "Error: " << Mix_GetError() << std::endl;
+    }
+
     Uint64 lastFpsCalcTime = SDL_GetTicks64();
     Uint64 cameraAdjustTimestamp = SDL_GetTicks64();
     double cameraElasticity = 0.5;
@@ -98,17 +105,21 @@ int main(int argc, char* argv[]) {
     youDiedSound = new Sound("./sound/sad-trombone.wav");
     youDiedSound->SetupDevice();
 
-    Sound* coinSound;
-    coinSound = new Sound("./sound/coin.wav");
-    coinSound->SetupDevice();
+    Mix_Chunk* coinSound = Mix_LoadWAV("./sound/coin.wav");
 
-    Sound* jumpSound;
-    jumpSound = new Sound("./sound/jump.wav");
-    jumpSound->SetupDevice();
+    //Sound* coinSound;
+    //coinSound = new Sound("./sound/coin.wav");
+    //coinSound->SetupDevice();
 
-    Sound* splashSound;
-    splashSound = new Sound("./sound/splash.wav");
-    splashSound->SetupDevice();
+    Mix_Chunk* jumpSound = Mix_LoadWAV("./sound/jump.wav");
+
+    //Sound* jumpSound;
+    //jumpSound = new Sound("./sound/jump.wav");
+    //jumpSound->SetupDevice();
+
+    //Sound* splashSound;
+    //splashSound = new Sound("./sound/splash.wav");
+    //splashSound->SetupDevice();
 
     //Sound* titleSong;
     //titleSong = new Sound("./sound/title.wav");
@@ -146,7 +157,7 @@ int main(int argc, char* argv[]) {
     //Background cloudsRepeat(renderer, "./backgrounds/sky_background.bmp", 1, 1, true, true);
 
     //int startHeight = level1Bitmap.getHeight() * 30 - resW;
-    int startHeight = 100;
+    int startHeight = level1Bitmap.getHeight() * tileW - 1000;
     int startWidth = playerRect.x = resW / 2 - playerWidth / 2 + 2 * tileW;
     playerRect.y = startHeight;
     playerRect.x = startWidth;
@@ -205,7 +216,7 @@ int main(int argc, char* argv[]) {
 
     BackgroundManager backgroundManager(renderer, "./backgrounds/", horizontalParallaxFactor, verticalParallaxFactor, level1.m_height, tileW);
 
-    playerRect.x = level1.m_width * 30 - 1000;
+    //playerRect.x = level1.m_width * 30 - 1000;
 
     //this is stupid because I refused to write my own hash function for a map<MyRGB> way to associate tileIDs with colors from the bitmap, 
     //doesn't really need to be that fast (hopefully!), only used once when each level loads. 
@@ -290,7 +301,7 @@ int main(int argc, char* argv[]) {
 
         // (2) Handle Updates
         // grid origin is top left of screen...
-        playerPhysicsManager.updatePlayerVelocities(controlsManager);
+        playerPhysicsManager.updatePlayerVelocities(controlsManager, jumpSound);
 
         if (gameStarted) 
         {
@@ -452,6 +463,8 @@ int main(int argc, char* argv[]) {
                                 ((tileW * tileW) / textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->minimumCollisionRatio))
                             {
                                 scoreManager.addConsumablePoints((*level1.m_tileIds)[i][j]);
+                                //todo:ANOTHER FUCKING MANAGER CLASS HERE FOR SOUND
+                                Mix_PlayChannel(1, coinSound, 0);
                                 //todo:call transform() here when complete
                                 (*level1.m_tileIds)[i][j] = textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->transformationTileIndex;
                             }
@@ -459,6 +472,8 @@ int main(int argc, char* argv[]) {
                         else
                         {
                             scoreManager.addConsumablePoints((*level1.m_tileIds)[i][j]);
+                            //todo:ANOTHER FUCKING MANAGER CLASS HERE FOR SOUND
+                            Mix_PlayChannel(1, coinSound, 0);
                             //todo:call transform() here when complete
                             (*level1.m_tileIds)[i][j] = textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->transformationTileIndex;
                         }
@@ -563,7 +578,7 @@ int main(int argc, char* argv[]) {
             playerSpriteManager.drawSprite(renderer, 
             p_playerDrawingRect,
             controlsManagerPtr,
-            (std::abs(playerPhysicsManager.yVelocity) < 1e-1 ? false : true),
+            (std::abs(playerPhysicsManager.yVelocity) < 1e-4 ? false : true),
             (std::abs(playerPhysicsManager.xVelocity) < .2) ? 0 : playerPhysicsManager.xVelocity > .2 ? 1 : -1
             );
         }
@@ -583,12 +598,17 @@ int main(int argc, char* argv[]) {
 
     //Destroy shit
     delete youDiedSound;
-    delete splashSound;
-    delete jumpSound;
-    delete coinSound;
+    //delete splashSound;
+    //delete jumpSound;
+    //delete coinSound;
     //delete titleSong;
+
+    Mix_FreeChunk(coinSound);
+    coinSound = nullptr;
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    Mix_Quit();
     SDL_Quit();
     return 0;
 }
