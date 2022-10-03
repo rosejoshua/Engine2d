@@ -47,7 +47,7 @@ TextureToTileMapper::TextureToTileMapper(SDL_Renderer*& renderer, int tileW)
 				bool tempBool = false;
 				int tempInt = 0;
 
-				//ignoring 2 lines of instructions from tileBehaviorInput.txt
+				//ignoring 2 lines of instructions/comments from tileBehaviorInput.txt
 				std::getline(file, tempString);
 				std::getline(file, tempString);
 				std::getline(file, tempString);

@@ -10,6 +10,7 @@
 
 // local library
 #include "SpriteManager.hpp"
+#include "ControlsManager.hpp"
 
 class PlayerSpriteManager
 {
@@ -35,7 +36,7 @@ public:
 	SpriteManager* turningFrontFromLeft;
 	SpriteManager* turningFrontFromRight;
 
-	void drawSprite(SDL_Renderer* renderer, SDL_Rect* p_playerDrawingRect, bool airborne, int normalizedDirection);
+	void drawSprite(SDL_Renderer* renderer, SDL_Rect* p_playerDrawingRect, ControlsManager* controlsManager, bool airborne, int normalizedDirection);
 
 
 	//void drawSprite(SDL_Renderer* renderer, SDL_Rect* p_playerDrawingRect, int xPos, int yPos, Uint64 currentTimeInMillis);

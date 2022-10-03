@@ -3,6 +3,7 @@
 // Third-party library
 #include "SDL.h"
 #include "SDL_ttf.h"
+#include "SDL_mixer.h"
 
 // C++ Standard Libraries
 #include <iostream>
@@ -26,6 +27,8 @@
 #include "LevelMap.hpp"
 #include "Sound.hpp"
 #include "PlayerSpriteManager.hpp"
+#include "Background.hpp"
+#include "BackgroundManager.hpp"
 
 // variable declarations
 static Uint8* audio_pos; // global pointer to the audio buffer to be played
@@ -34,13 +37,13 @@ static Uint32 audio_len; // remaining length of the sample we have to play
 int main(int argc, char* argv[]) {
 
     srand(time(nullptr));
-    const int horizontalParallaxFactor = 3;
-    const int verticalParallaxFactor = 3;
+    const int horizontalParallaxFactor = 12;
+    const int verticalParallaxFactor = 15;
     const int numUniqueTilesInLevel = 14;
     const int cycleLimiter = 6;
 
-    int resW = 1920;
-    int resH = 1020;
+    int resW = 2560;
+    int resH = 1440;
     int tileW = 30;
     int playerHeight = tileW * 2.5;
     int playerWidth = tileW * 1.3;
@@ -69,7 +72,15 @@ int main(int argc, char* argv[]) {
     else {
         std::cout << "SDL VIDEO, JOYSTICK and AUDIO system is ready to go!" << std::endl;
     }
+
+    if (Mix_OpenAudio(44100, MIX_DEFAULT_FORMAT, 2, 2048) < 0)
+    {
+        std::cerr << "Error: " << Mix_GetError() << std::endl;
+    }
+
     Uint64 lastFpsCalcTime = SDL_GetTicks64();
+    Uint64 cameraAdjustTimestamp = SDL_GetTicks64();
+    double cameraElasticity = 0.5;
     SDL_Window* window = nullptr;
     ControlsManager controlsManager;
     ControlsManager* controlsManagerPtr = &controlsManager;
@@ -83,7 +94,7 @@ int main(int argc, char* argv[]) {
     
     controlsManager.initializeControls();
 
-    window = SDL_CreateWindow("THE GAME!", 400, 200, resW, resH, /*SDL_WINDOW_FULLSCREEN |*/ SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("THE GAME!", 100, 100, resW, resH, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
 
     if (window == NULL) {
         // In the case that the window could not be made...
@@ -94,22 +105,26 @@ int main(int argc, char* argv[]) {
     youDiedSound = new Sound("./sound/sad-trombone.wav");
     youDiedSound->SetupDevice();
 
-    Sound* coinSound;
-    coinSound = new Sound("./sound/coin.wav");
-    coinSound->SetupDevice();
+    Mix_Chunk* coinSound = Mix_LoadWAV("./sound/coin.wav");
 
-    Sound* jumpSound;
-    jumpSound = new Sound("./sound/jump.wav");
-    jumpSound->SetupDevice();
+    //Sound* coinSound;
+    //coinSound = new Sound("./sound/coin.wav");
+    //coinSound->SetupDevice();
 
-    Sound* splashSound;
-    splashSound = new Sound("./sound/splash.wav");
-    splashSound->SetupDevice();
+    Mix_Chunk* jumpSound = Mix_LoadWAV("./sound/jump.wav");
 
-    Sound* titleSong;
-    titleSong = new Sound("./sound/title.wav");
-    titleSong->SetupDevice();
-    titleSong->PlaySound();
+    //Sound* jumpSound;
+    //jumpSound = new Sound("./sound/jump.wav");
+    //jumpSound->SetupDevice();
+
+    //Sound* splashSound;
+    //splashSound = new Sound("./sound/splash.wav");
+    //splashSound->SetupDevice();
+
+    //Sound* titleSong;
+    //titleSong = new Sound("./sound/title.wav");
+    //titleSong->SetupDevice();
+    //titleSong->PlaySound();
 
 
     //if (SDL_LoadWAV(audioYouDiedDir.c_str(), &sound_spec, &sound_buffer, &sound_length) == NULL) {
@@ -123,7 +138,7 @@ int main(int argc, char* argv[]) {
     //SDL_PauseAudioDevice(m_device,0);
 
     SDL_Renderer* renderer = nullptr;
-    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED );
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
     TextureToTileMapper textureToTileMapper(renderer, tileW);
     menuManager.initialize(resW, resH, renderer);
     youDiedManager.initialize(resW, resH, renderer);
@@ -132,12 +147,20 @@ int main(int argc, char* argv[]) {
     // Create a rectangle for player model
     SDL_Rect playerRect;
     playerRect.w = playerWidth;
-    std::cout << playerWidth << " ";
     playerRect.h = playerHeight;
-    std::cout << playerHeight << std::endl;
-    //playerRect.x = resW/2 - playerWidth/2 + 2*tileW;
-    playerRect.x = 1000;
-    playerRect.y = tileW;
+    //playerRect.x = 1000;
+    //playerRect.y = tileW;
+
+    Bitmap level1Bitmap("./levels/level1.bmp");
+    //Bitmap background1Bitmap("./backgrounds/background1.bmp");
+    //Background bottomNoRepeat(renderer, "./backgrounds/mountain_background.bmp", 0, 0, true, false);
+    //Background cloudsRepeat(renderer, "./backgrounds/sky_background.bmp", 1, 1, true, true);
+
+    //int startHeight = level1Bitmap.getHeight() * 30 - resW;
+    int startHeight = level1Bitmap.getHeight() * tileW - 1000;
+    int startWidth = playerRect.x = resW / 2 - playerWidth / 2 + 2 * tileW;
+    playerRect.y = startHeight;
+    playerRect.x = startWidth;
 
     //Create a second rectangle for player model previous position, necessary for backtracking player position in the event of a collision
     SDL_Rect prevPlayerRect;
@@ -173,9 +196,6 @@ int main(int argc, char* argv[]) {
     MyRGB white;
     white = MyRGB(255, 255, 255);
 
-    Bitmap level1Bitmap("./levels/level1.bmp");
-    Bitmap background1Bitmap("./backgrounds/background1.bmp");
-
     //first row of level bitmap starts with a color coding to identify what each pixel in the 
     //bitmap corresponds to as a tile
     vector<MyRGB> colorToTileId;
@@ -193,6 +213,10 @@ int main(int argc, char* argv[]) {
 
     LevelMap level1(level1Bitmap.getWidth(), level1Bitmap.getHeight());
     int tileId = -1;
+
+    BackgroundManager backgroundManager(renderer, "./backgrounds/", horizontalParallaxFactor, verticalParallaxFactor, level1.m_height, tileW);
+
+    //playerRect.x = level1.m_width * 30 - 1000;
 
     //this is stupid because I refused to write my own hash function for a map<MyRGB> way to associate tileIDs with colors from the bitmap, 
     //doesn't really need to be that fast (hopefully!), only used once when each level loads. 
@@ -216,24 +240,24 @@ int main(int argc, char* argv[]) {
 
     tileId = -1;
 
-    LevelMap background1(background1Bitmap.getWidth(), background1Bitmap.getHeight());
-    for (int y = 0; y < background1Bitmap.getHeight(); y++)
-    {
-        for (int x = 0; x < background1Bitmap.getWidth(); x++)
-        {
-            for (int i = 0; i < colorToTileId.size(); i++)
-            {
-                if (colorToTileId[i] == background1Bitmap.getPixel(x, y))
-                {
-                    {
-                        tileId = i;
-                        break;
-                    }
-                }
-            }
-            background1.setTileIdFromBitmapArray(y, x, tileId);
-        }
-    }
+    //LevelMap background1(background1Bitmap.getWidth(), background1Bitmap.getHeight());
+    //for (int y = 0; y < background1Bitmap.getHeight(); y++)
+    //{
+    //    for (int x = 0; x < background1Bitmap.getWidth(); x++)
+    //    {
+    //        for (int i = 0; i < colorToTileId.size(); i++)
+    //        {
+    //            if (colorToTileId[i] == background1Bitmap.getPixel(x, y))
+    //            {
+    //                {
+    //                    tileId = i;
+    //                    break;
+    //                }
+    //            }
+    //        }
+    //        background1.setTileIdFromBitmapArray(y, x, tileId);
+    //    }
+    //}
 
     PlayerSpriteManager playerSpriteManager(renderer);
 
@@ -241,6 +265,7 @@ int main(int argc, char* argv[]) {
     // Main application loop
     while (gameIsRunning) 
     {   
+
         //frame capping to about 165hz...will eventually separate physics from capped drawing/display to 
         //hopefully prioritize physics calculations over drawing and not overdraw to prevent shearing on good PCs
         while (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate < cycleLimiter) {}
@@ -276,7 +301,7 @@ int main(int argc, char* argv[]) {
 
         // (2) Handle Updates
         // grid origin is top left of screen...
-        playerPhysicsManager.updatePlayerVelocities(controlsManager);
+        playerPhysicsManager.updatePlayerVelocities(controlsManager, jumpSound);
 
         if (gameStarted) 
         {
@@ -419,11 +444,6 @@ int main(int argc, char* argv[]) {
                 {
                     playerPhysicsManager.inWater = false;
                 }
-
-                //if ((*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 13)
-                //{
-                //    playerPhysicsManager.yVelocity += (2 * playerPhysicsManager.jumpVelocity);
-                //}
             }
             //check for lethal non-collision tiles and consumables
             for (int i = playerRect.x / tileW; i <= (playerRect.x + playerWidth - 1) / tileW; i++)
@@ -443,6 +463,8 @@ int main(int argc, char* argv[]) {
                                 ((tileW * tileW) / textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->minimumCollisionRatio))
                             {
                                 scoreManager.addConsumablePoints((*level1.m_tileIds)[i][j]);
+                                //todo:ANOTHER FUCKING MANAGER CLASS HERE FOR SOUND
+                                Mix_PlayChannel(1, coinSound, 0);
                                 //todo:call transform() here when complete
                                 (*level1.m_tileIds)[i][j] = textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->transformationTileIndex;
                             }
@@ -450,6 +472,8 @@ int main(int argc, char* argv[]) {
                         else
                         {
                             scoreManager.addConsumablePoints((*level1.m_tileIds)[i][j]);
+                            //todo:ANOTHER FUCKING MANAGER CLASS HERE FOR SOUND
+                            Mix_PlayChannel(1, coinSound, 0);
                             //todo:call transform() here when complete
                             (*level1.m_tileIds)[i][j] = textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->transformationTileIndex;
                         }
@@ -471,13 +495,11 @@ int main(int argc, char* argv[]) {
             youDiedManager.drawYouDied(renderer, &dead, diedAt, &gameStarted, &showMenu, resW, resH, youDiedSound);
             if (!dead)
             {
-                playerRect.x = 1000;
-                playerRect.y = tileW;
-                std::cout << "are we here???" << std::endl;
-                std::cout << "showMenu: " << showMenu << std::endl;
+                playerRect.x = startWidth;
+                playerRect.y = startHeight;
             }
         }
-        if (showMenu)
+        else if (showMenu)
         {
             // (3) Clear and Draw the Screen
             // Gives us a clear "canvas"
@@ -487,60 +509,37 @@ int main(int argc, char* argv[]) {
         }
             
 
-        if (gameStarted && !dead) 
+        else if (gameStarted && !dead) 
         {
-            titleSong->StopSound();
+            //titleSong->StopSound();
             // (3) Clear and Draw the Screen
             // Gives us a clear "canvas"
             SDL_SetRenderDrawColor(renderer, levelBackgroundColor.r, levelBackgroundColor.g, levelBackgroundColor.b, SDL_ALPHA_OPAQUE);
             SDL_RenderClear(renderer);
+
+            
             //moved camera calculations above tile drawing to eliminate bug showing leftmost tiles in array before drawing based on player positon. Hopefully this doesn't cause any issues (so far so good)
             if ((playerRect.y - camera.cameraY) > (resH * .6))
             {
-                camera.cameraY += ((playerRect.y - camera.cameraY) - (resH * .6));
+                camera.cameraY += (cameraElasticity * ((playerRect.y - camera.cameraY) - (resH * .6)) + 1);
                 //hiding bottom set of tiles so that player can fall thru holes in the ground
                 if (camera.cameraY > (level1.m_height * tileW - resH) - hiddenBottomHeight)
                     camera.cameraY = (level1.m_height * tileW - resH) - hiddenBottomHeight;
             }
             else if ((playerRect.y - camera.cameraY) < (resH * .4))
             {
-                camera.cameraY -= (resH * .4) - (playerRect.y - camera.cameraY);
+                camera.cameraY -= (cameraElasticity * ((resH * .4) - (playerRect.y - camera.cameraY)) + 1);
                 if (camera.cameraY < 0)
                     camera.cameraY = 0;
             }
 
             if ((playerRect.x + playerWidth / 2 - camera.cameraX) > (resW / 2))
             {
-                camera.cameraX += ((playerRect.x + playerWidth / 2 - camera.cameraX) - (resW / 2));
-                //if ((playerRect.x + playerWidth / 2) > (sizeof testMap.m_mapArray[0] / sizeof(int) + 2*tileW + resW / 2))
-                //{
-                //    playerRect.x -= tileW;
-                //    camera.cameraX -= tileW;
-
-                //    horizontalProgress++;
-                //    scoreManager.updateScoreByProgress(horizontalProgress);
-
-                //    call regen on map array
-                //    for (int i = 2; i < testMap.WIDTH - 1; i++)
-                //    {
-                //        for (int j = 0; j < sizeof testMap.m_mapArray / sizeof testMap.m_mapArray[0]; j++)
-                //        for (int j = 0; j < testMap.HEIGHT; j++)
-                //        {
-                //            testMap.m_mapArray[j][i - 1] = testMap.m_mapArray[j][i];
-
-                //        }
-                //    }
-
-                //    for (int i = 1; i < testMap.HEIGHT-3; i++)
-                //    {                        
-                //        tileFactory.copyTile(testMap.m_mapArray[i][testMap.WIDTH - 2], i);
-                //    }
-                //    tileFactory.cycleTileQueue();
-                //}
+                camera.cameraX += (cameraElasticity * ((playerRect.x + playerWidth / 2 - camera.cameraX) - (resW / 2)) + 1);
             }
             else if ((playerRect.x + playerWidth / 2 - camera.cameraX) < (resW / 2))
             {
-                camera.cameraX -= (resW / 2) - (playerRect.x + playerWidth / 2 - camera.cameraX);
+                camera.cameraX -= (cameraElasticity * ((resW / 2) - (playerRect.x + playerWidth / 2 - camera.cameraX)) + 1);
             }
 
             //camera bounds checking and corrections
@@ -549,27 +548,12 @@ int main(int argc, char* argv[]) {
 
             if (camera.cameraX > level1.m_width * tileW - resW - tileW)
                 camera.cameraX = level1.m_width * tileW - resW - tileW;
-            //Draw background tiles first
-            for (int i = 0; i < (resW / tileW) + 1; i++)
-            {
-                //[(camera.cameraX / 3) / tileW + (i / 3)][(camera.cameraY / 3) / tileW + (j / 3)]
-                for (int j = 0; j <= (resH / tileW); j++)
-                {
-                    textureToTileMapper.drawTile(renderer, (*background1.m_tileIds)[
-                        
-                        (((camera.cameraX / horizontalParallaxFactor) / tileW) + i) % background1.m_width
-                    
-                    ][
-                        
-                        (((camera.cameraY / verticalParallaxFactor) / tileW) + j) % background1.m_height
-                    
-                    ],
-                        (i * tileW) - (camera.cameraX/horizontalParallaxFactor % tileW),
-                        (j * tileW) - (camera.cameraY/verticalParallaxFactor % tileW),
-                        SDL_GetTicks64());
-                }
-            }
 
+            cameraAdjustTimestamp = SDL_GetTicks64();
+
+            //Draw background layers
+            backgroundManager.drawBackground(camera.cameraX, camera.cameraY, resW, resH);
+            
             for (int i = 0; i < (resW / tileW) + 1; i++)
             {
                 //<= necessary for drawing tiles to fill space less than tileW (underbuffering). Added hidden row of tiles to bottom 
@@ -591,39 +575,18 @@ int main(int argc, char* argv[]) {
             playerDrawingRect.y = playerRect.y - camera.cameraY;
 
             scoreManager.drawScore(renderer);
-
-            //if (!dead)
-            //    SDL_SetRenderDrawColor(renderer, 255, 105, 180, SDL_ALPHA_OPAQUE);
-            //else SDL_SetRenderDrawColor(renderer, 125, 125, 125, SDL_ALPHA_OPAQUE);
-
-            //if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE  ||
-            //    controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
-            //{
-            //    SDL_RenderDrawLine(renderer, playerRect.x - cameraX + (playerWidth / 2), playerRect.y - cameraY + (playerHeight / 3), playerRect.x + (controlsManager.aimXDir), playerRect.y + (controlsManager.aimYDir));
-            //}
-
-            //Right aimstick line drawing for testing, no use for aim yet.
-            //if (controlsManager.aimXDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimXDir < -controlsManager.JOYSTICK_DEAD_ZONE ||
-            //    controlsManager.aimYDir > controlsManager.JOYSTICK_DEAD_ZONE || controlsManager.aimYDir < -controlsManager.JOYSTICK_DEAD_ZONE)
-            //{
-            //    controlsManager.getNormalizedRightStickDir(&xLookPos, &yLookPos, camera.lookModifierValue);
-            //    SDL_RenderDrawLine(renderer, playerRect.x - camera.cameraX + (playerWidth / 2), playerRect.y - camera.cameraY + (playerHeight / 3), 
-            //        playerRect.x - camera.cameraX + (playerWidth / 2) + xLookPos, playerRect.y - camera.cameraY + (playerHeight / 3) + yLookPos);
-            //}
-            
-            //SDL_RenderFillRect(renderer, &playerDrawingRect);
-            //testSpriteManager.drawSprite(renderer, p_playerDrawingRect, 0, 0, 0);
             playerSpriteManager.drawSprite(renderer, 
             p_playerDrawingRect,
+            controlsManagerPtr,
             (std::abs(playerPhysicsManager.yVelocity) < 1e-4 ? false : true),
-            (std::abs(playerPhysicsManager.xVelocity) < 1e-4) ? 0 : playerPhysicsManager.xVelocity > 0 ? 1 : -1
+            (std::abs(playerPhysicsManager.xVelocity) < .2) ? 0 : playerPhysicsManager.xVelocity > .2 ? 1 : -1
             );
         }
 
         // Finally show what we've drawn
         SDL_RenderPresent(renderer);
         framesDrawnSinceLastFpsCheck++;
-        if (framesDrawnSinceLastFpsCheck == 10 && showFps) {
+        if (showFps && framesDrawnSinceLastFpsCheck == 10) {
             std::cout << "FPS: " << (10000.0 / (float)(SDL_GetTicks64() - lastFpsCalcTime)) <<  std::endl;
             lastFpsCalcTime = SDL_GetTicks64();
             framesDrawnSinceLastFpsCheck = 0;
@@ -635,12 +598,17 @@ int main(int argc, char* argv[]) {
 
     //Destroy shit
     delete youDiedSound;
-    delete splashSound;
-    delete jumpSound;
-    delete coinSound;
+    //delete splashSound;
+    //delete jumpSound;
+    //delete coinSound;
     //delete titleSong;
+
+    Mix_FreeChunk(coinSound);
+    coinSound = nullptr;
+
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+    Mix_Quit();
     SDL_Quit();
     return 0;
 }

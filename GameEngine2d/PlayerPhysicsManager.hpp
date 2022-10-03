@@ -5,6 +5,7 @@
 
 // Third-party library
 #include "SDL.h"
+#include "SDL_mixer.h"
 
 #include "ControlsManager.hpp"
 
@@ -36,7 +37,7 @@ public:
 
 	Uint64 lastPhysicsUpdate;
 
-	void updatePlayerVelocities(ControlsManager& controlsManager);
+	void updatePlayerVelocities(ControlsManager& controlsManager, Mix_Chunk* jumpSound);
 	void setModifiers(int playerHeight);
 };
 

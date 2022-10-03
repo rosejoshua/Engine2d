@@ -116,14 +116,14 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>D:\dev\cpp\source\repos\GameEngine2d\SDL2_ttf\include;D:\dev\cpp\source\repos\GameEngine2d\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\dev\cpp\source\repos\GameEngine2d\SDL2_mixer-2.6.2\include;D:\dev\cpp\source\repos\GameEngine2d\SDL2_ttf\include;D:\dev\cpp\source\repos\GameEngine2d\SDL2\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <TreatWChar_tAsBuiltInType>true</TreatWChar_tAsBuiltInType>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\dev\cpp\source\repos\GameEngine2d\SDL2_ttf\lib\x64;D:\dev\cpp\source\repos\GameEngine2d\SDL2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>D:\dev\cpp\source\repos\GameEngine2d\SDL2_mixer-2.6.2\lib\x64;D:\dev\cpp\source\repos\GameEngine2d\SDL2_ttf\lib\x64;D:\dev\cpp\source\repos\GameEngine2d\SDL2\lib\x64;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>SDL2.lib;SDL2main.lib;SDL2_ttf.lib;SDL2_mixer.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -143,6 +143,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Background.cpp" />
+    <ClCompile Include="BackgroundManager.cpp" />
     <ClCompile Include="Bitmap.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ControlsManager.cpp" />
@@ -166,6 +168,8 @@
     <ClCompile Include="YouDiedManager.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Background.hpp" />
+    <ClInclude Include="BackgroundManager.hpp" />
     <ClInclude Include="Bitmap.hpp" />
     <ClInclude Include="BitmapFileHeader.hpp" />
     <ClInclude Include="BitmapInfoHeader.hpp" />

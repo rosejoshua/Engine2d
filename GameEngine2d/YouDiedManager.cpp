@@ -82,7 +82,6 @@ void YouDiedManager::drawYouDied(SDL_Renderer* renderer, bool* dead, Uint64 died
         }
 
         SDL_RenderCopy(renderer, youDiedTextTexturePtr, NULL, youDiedTextWrapperPtr);
-        SDL_RenderPresent(renderer);
     }
     else
     {

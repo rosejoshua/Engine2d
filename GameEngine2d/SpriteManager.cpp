@@ -33,7 +33,6 @@ SpriteManager::SpriteManager(std::string spriteDir, std::string seriesDir, SDL_R
 		}
 
 	}
-	std::cout << "success grabbing sprite animation, size: " << textureVector.size() << std::endl;
 }
 
 SpriteManager::SpriteManager(std::string spriteDir, std::string seriesDir, SDL_Renderer* renderer, int millisBetweenFrames)
@@ -69,7 +68,6 @@ SpriteManager::SpriteManager(std::string spriteDir, std::string seriesDir, SDL_R
 		}
 
 	}
-	std::cout << "success grabbing sprite animation, size: " << textureVector.size() << std::endl;
 }
 
 SpriteManager::~SpriteManager()
