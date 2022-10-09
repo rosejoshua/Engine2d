@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     srand(time(nullptr));
     const int horizontalParallaxFactor = 12;
     const int verticalParallaxFactor = 15;
-    const int numUniqueTilesInLevel = 14;
+    const int numUniqueTilesInLevel = 17;
     const int cycleLimiter = 6;
 
     int resW = 2560;
@@ -101,17 +101,20 @@ int main(int argc, char* argv[]) {
         std::cout << "Could not create window: " << SDL_GetError();
     }
 
-    Sound* youDiedSound;
-    youDiedSound = new Sound("./sound/sad-trombone.wav");
-    youDiedSound->SetupDevice();
+    //Sound* youDiedSound;
+    //youDiedSound = new Sound("./sound/sad-trombone.wav");
+    //youDiedSound->SetupDevice();
 
     Mix_Chunk* coinSound = Mix_LoadWAV("./sound/coin.wav");
-
-    //Sound* coinSound;
-    //coinSound = new Sound("./sound/coin.wav");
-    //coinSound->SetupDevice();
-
     Mix_Chunk* jumpSound = Mix_LoadWAV("./sound/jump.wav");
+    Mix_Chunk* splashSound = Mix_LoadWAV("./sound/splash.wav");
+    Mix_Chunk* thumpSound = Mix_LoadWAV("./sound/thump.wav");
+    Mix_Chunk* splatSound = Mix_LoadWAV("./sound/splat.wav");
+
+    Mix_Volume(1, 50);
+    Mix_Volume(2, 40);
+    Mix_Volume(3, 110);
+    Mix_Volume(4, 60);
 
     //Sound* jumpSound;
     //jumpSound = new Sound("./sound/jump.wav");
@@ -240,25 +243,6 @@ int main(int argc, char* argv[]) {
 
     tileId = -1;
 
-    //LevelMap background1(background1Bitmap.getWidth(), background1Bitmap.getHeight());
-    //for (int y = 0; y < background1Bitmap.getHeight(); y++)
-    //{
-    //    for (int x = 0; x < background1Bitmap.getWidth(); x++)
-    //    {
-    //        for (int i = 0; i < colorToTileId.size(); i++)
-    //        {
-    //            if (colorToTileId[i] == background1Bitmap.getPixel(x, y))
-    //            {
-    //                {
-    //                    tileId = i;
-    //                    break;
-    //                }
-    //            }
-    //        }
-    //        background1.setTileIdFromBitmapArray(y, x, tileId);
-    //    }
-    //}
-
     PlayerSpriteManager playerSpriteManager(renderer);
 
     // Infinite loop for our application
@@ -301,7 +285,9 @@ int main(int argc, char* argv[]) {
 
         // (2) Handle Updates
         // grid origin is top left of screen...
-        playerPhysicsManager.updatePlayerVelocities(controlsManager, jumpSound);
+        playerPhysicsManager.updatePlayerVelocities(controlsManager, jumpSound, thumpSound);
+        //std::cout << "after physics Update Velocities: " << playerPhysicsManager.currentSpecialBehavior << std::endl;
+
 
         if (gameStarted) 
         {
@@ -352,14 +338,24 @@ int main(int argc, char* argv[]) {
                 }
                 else if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW]]->isCollision)
                 {
-                    if (controlsManager.button0Down == false)
+
+                    //std::cout << "in elseif for isCollision: " << playerPhysicsManager.currentSpecialBehavior << std::endl;
+
+                    if (controlsManager.button0Down == false  && playerPhysicsManager.currentSpecialBehavior == 0)
                     {
                         controlsManager.canJump = true;
-                        controlsManager.landing = true;
-                        playerPhysicsManager.yVelocity = 0.0;
+                    }
+                    else if ((playerPhysicsManager.currentSpecialBehavior == 2) && playerPhysicsManager.yVelocity == 0.0)
+                    {
+                        playerPhysicsManager.currentSpecialBehavior = 0;
+                    }
+                    else if ((playerPhysicsManager.currentSpecialBehavior == 5) && playerPhysicsManager.yVelocity == 0.0)
+                    {
+                        playerPhysicsManager.currentSpecialBehavior = 0;
                     }
                     break;
                 }
+                //std::cout << "after elseif for isCollision: " << playerPhysicsManager.currentSpecialBehavior << std::endl;
             }
 
 
@@ -374,6 +370,7 @@ int main(int argc, char* argv[]) {
                     //to check all tiles, or just stop gravity when player is dead and make spikes non-collision and include below
                     if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isLethal)
                     {
+                        Mix_PlayChannel(4, splatSound, 0);
                         dead = true;
                         diedAt = SDL_GetTicks64();
                         gameStarted = false;
@@ -439,7 +436,12 @@ int main(int argc, char* argv[]) {
                     
                 //checking in water, only checks bottom right tile of collision matrix
                 if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][(playerRect.y + playerHeight - 1) / tileW]]->isLiquid)
+                {
+                    if (!playerPhysicsManager.inWater)
+                        Mix_PlayChannel(4, splashSound, 0);
                     playerPhysicsManager.inWater = true;
+                    
+                }
                 else
                 {
                     playerPhysicsManager.inWater = false;
@@ -484,6 +486,27 @@ int main(int argc, char* argv[]) {
                         diedAt = SDL_GetTicks64();
                         gameStarted = false;
                     }
+                    
+                    else if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->hasSpecialCharacteristics)
+                    {
+                        //std::cout << "in elseif for isSpecialChara: " << playerPhysicsManager.currentSpecialBehavior << std::endl;
+                        if ((*level1.m_tileIds)[i][j] == 13)
+                        {
+                            playerPhysicsManager.currentSpecialBehavior = 1;
+                        }
+                        else if ((*level1.m_tileIds)[i][j] == 14)
+                        {
+                            playerPhysicsManager.currentSpecialBehavior = 3;
+                        }
+                        else if ((*level1.m_tileIds)[i][j] == 15)
+                        {
+                            playerPhysicsManager.currentSpecialBehavior = 4;
+                        }
+                        else if ((*level1.m_tileIds)[i][j] == 16)
+                        {
+                            playerPhysicsManager.currentSpecialBehavior = 6;
+                        }
+                    }
                         
                 }
             }
@@ -492,7 +515,7 @@ int main(int argc, char* argv[]) {
         if (dead)
         {
             showMenu = false;
-            youDiedManager.drawYouDied(renderer, &dead, diedAt, &gameStarted, &showMenu, resW, resH, youDiedSound);
+            youDiedManager.drawYouDied(renderer, &dead, diedAt, &gameStarted, &showMenu, resW, resH/*, youDiedSound*/);
             if (!dead)
             {
                 playerRect.x = startWidth;
@@ -597,14 +620,22 @@ int main(int argc, char* argv[]) {
     }
 
     //Destroy shit
-    delete youDiedSound;
+    //delete youDiedSound;
     //delete splashSound;
     //delete jumpSound;
     //delete coinSound;
     //delete titleSong;
 
     Mix_FreeChunk(coinSound);
+    Mix_FreeChunk(jumpSound);
+    Mix_FreeChunk(splashSound);
+    Mix_FreeChunk(thumpSound);
+    Mix_FreeChunk(splatSound);
     coinSound = nullptr;
+    jumpSound = nullptr;
+    splashSound = nullptr;
+    thumpSound = nullptr;
+    splatSound = nullptr;
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);

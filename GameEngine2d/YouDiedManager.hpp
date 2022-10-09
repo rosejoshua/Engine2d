@@ -28,6 +28,6 @@ public:
 
     int initialize(int resW, int resH, SDL_Renderer* renderer);
 
-    void drawYouDied(SDL_Renderer* renderer, bool* dead, Uint64 diedAt, bool* gameStarted, bool* showMenu, int resW, int resH, Sound* youDiedSound);
+    void drawYouDied(SDL_Renderer* renderer, bool* dead, Uint64 diedAt, bool* gameStarted, bool* showMenu, int resW, int resH/*, Sound* youDiedSound*/);
 };
 
