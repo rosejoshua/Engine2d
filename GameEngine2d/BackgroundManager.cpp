@@ -22,7 +22,7 @@ BackgroundManager::~BackgroundManager()
 
 void BackgroundManager::drawBackground(int cameraX, int cameraY, int resW, int resH)
 {
-	int cloudParallaxModifier = 3;
+	int cloudParallaxModifier = 4;
 	int currentYCheck0 = background0->inViewYHeight(cameraY, resH, mapHeight, tileW, parallaxYRatio, 0);
 	if (currentYCheck0 > 0)
 	{

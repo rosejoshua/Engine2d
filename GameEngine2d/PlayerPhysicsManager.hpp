@@ -29,15 +29,16 @@ public:
 	float maxSprintVelocity;
 	float maxUpwardVerticalVelocity;
 	float maxDownwardVerticalVelocity;
+	float hitTheBrakes;
 
 	float yVelocity;
 	float xVelocity;
-
+	int currentSpecialBehavior;
 	bool inWater;
 
 	Uint64 lastPhysicsUpdate;
 
-	void updatePlayerVelocities(ControlsManager& controlsManager, Mix_Chunk* jumpSound);
+	void updatePlayerVelocities(ControlsManager& controlsManager, Mix_Chunk* jumpSound, Mix_Chunk* thumpSound);
 	void setModifiers(int playerHeight);
 };
 

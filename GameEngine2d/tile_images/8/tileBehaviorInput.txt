@@ -12,7 +12,7 @@ false
 *** [true|false] IS CONSUMABLE: coins, hearts, powerups, etc...uses ***
 true
 *** [true|false] IS LIQUID: for applying alternate gravity when player is within tile ***
-false
+true
 *** [true|false] HAS COLLISION ANIMATION: for things like springboards, item consumption animation, p-switches, etc ***
 false
 *** [true|false] HAS TRANSFORMATION: turns into different tile after some event calls transform() on the TextureTile ***
