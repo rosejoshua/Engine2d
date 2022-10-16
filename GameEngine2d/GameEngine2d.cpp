@@ -39,11 +39,11 @@ int main(int argc, char* argv[]) {
     srand(time(nullptr));
     const int horizontalParallaxFactor = 12;
     const int verticalParallaxFactor = 15;
-    const int numUniqueTilesInLevel = 17;
+    const int numUniqueTilesInLevel = 22;
     const int cycleLimiter = 6;
 
-    int resW = 2560;
-    int resH = 1440;
+    int resW = 1920;
+    int resH = 1080;
     int tileW = 30;
     int playerHeight = tileW * 2.5;
     int playerWidth = tileW * 1.3;
@@ -61,8 +61,9 @@ int main(int argc, char* argv[]) {
     float previousToGravityAppliedYVelocity = 0.0f;
     Uint64 horizontalProgress = 0;
     MyRGB menuBackgroundColor;
-    MyRGB levelBackgroundColor = MyRGB(56, 192, 242);
-    //MyRGB levelBackgroundColor = MyRGB(102, 153, 255);
+    //MyRGB levelBackgroundColor = MyRGB(56, 192, 242);
+    MyRGB levelBackgroundColor = MyRGB(102, 153, 255);
+    //MyRGB levelBackgroundColor = MyRGB(16, 222, 198);
 
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_JOYSTICK | SDL_INIT_AUDIO ) < 0) {
         std::cout << "SDL could not be initialized: " <<
@@ -94,51 +95,24 @@ int main(int argc, char* argv[]) {
     
     controlsManager.initializeControls();
 
-    window = SDL_CreateWindow("THE GAME!", 100, 100, resW, resH, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
+    window = SDL_CreateWindow("Title!", 100, 100, resW, resH, SDL_WINDOW_FULLSCREEN | SDL_WINDOW_OPENGL);
 
     if (window == NULL) {
         // In the case that the window could not be made...
         std::cout << "Could not create window: " << SDL_GetError();
     }
 
-    //Sound* youDiedSound;
-    //youDiedSound = new Sound("./sound/sad-trombone.wav");
-    //youDiedSound->SetupDevice();
-
     Mix_Chunk* coinSound = Mix_LoadWAV("./sound/coin.wav");
-    Mix_Chunk* jumpSound = Mix_LoadWAV("./sound/jump.wav");
+    Mix_Chunk* jumpSound = Mix_LoadWAV("./sound/jump2.mp3");
     Mix_Chunk* splashSound = Mix_LoadWAV("./sound/splash.wav");
     Mix_Chunk* thumpSound = Mix_LoadWAV("./sound/thump.wav");
     Mix_Chunk* splatSound = Mix_LoadWAV("./sound/splat.wav");
+    Mix_Chunk* youDiedSound = Mix_LoadWAV("./sound/youdied.wav");
 
-    Mix_Volume(1, 50);
-    Mix_Volume(2, 40);
+    Mix_Volume(1, 40);
+    Mix_Volume(2, 100);
     Mix_Volume(3, 110);
     Mix_Volume(4, 60);
-
-    //Sound* jumpSound;
-    //jumpSound = new Sound("./sound/jump.wav");
-    //jumpSound->SetupDevice();
-
-    //Sound* splashSound;
-    //splashSound = new Sound("./sound/splash.wav");
-    //splashSound->SetupDevice();
-
-    //Sound* titleSong;
-    //titleSong = new Sound("./sound/title.wav");
-    //titleSong->SetupDevice();
-    //titleSong->PlaySound();
-
-
-    //if (SDL_LoadWAV(audioYouDiedDir.c_str(), &sound_spec, &sound_buffer, &sound_length) == NULL) {
-    //    return 1;
-    //}
-
-    //SDL_AudioDeviceID m_device;
-    //m_device = SDL_OpenAudioDevice(nullptr, 0, sound_spec, nullptr, )
-
-    //SDL_QueueAudio(m_device, sound_buffer, sound_length);
-    //SDL_PauseAudioDevice(m_device,0);
 
     SDL_Renderer* renderer = nullptr;
     renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
@@ -158,10 +132,30 @@ int main(int argc, char* argv[]) {
     //Bitmap background1Bitmap("./backgrounds/background1.bmp");
     //Background bottomNoRepeat(renderer, "./backgrounds/mountain_background.bmp", 0, 0, true, false);
     //Background cloudsRepeat(renderer, "./backgrounds/sky_background.bmp", 1, 1, true, true);
+    int cp0X = 10*tileW;
+    int cp0Y = 981*tileW;
+
+    int cp1X = 337*tileW;
+    int cp1Y = 981*tileW;
+
+    int cp2X = 466*tileW;
+    int cp2Y = 981*tileW;
+
+    int cp3X = 656*tileW;
+    int cp3Y = 980*tileW;
+
+    int cp4X = 812 * tileW;
+    int cp4Y = 964 * tileW;
+
+    int cp5X = 820 * tileW;
+    int cp5Y = 704 * tileW;
+
 
     //int startHeight = level1Bitmap.getHeight() * 30 - resW;
-    int startHeight = level1Bitmap.getHeight() * tileW - 1000;
-    int startWidth = playerRect.x = resW / 2 - playerWidth / 2 + 2 * tileW;
+    int startHeight = cp4Y;
+    //int startHeight = level1Bitmap.getHeight() * tileW - 2000;
+    int startWidth = cp4X;
+    //int startWidth = playerRect.x = resW / 4 - playerWidth / 2 + 2 * tileW;
     playerRect.y = startHeight;
     playerRect.x = startWidth;
 
@@ -309,8 +303,8 @@ int main(int argc, char* argv[]) {
                     if (!playerPhysicsManager.inWater)
                     {
                         playerPhysicsManager.yVelocity += playerPhysicsManager.gravityModifier * (SDL_GetTicks64() - playerPhysicsManager.lastPhysicsUpdate);
-                        if (playerPhysicsManager.yVelocity > playerPhysicsManager.maxDownwardVerticalVelocity)
-                            playerPhysicsManager.yVelocity = playerPhysicsManager.maxDownwardVerticalVelocity;
+                        if (playerPhysicsManager.yVelocity > playerPhysicsManager.maxPositiveVelocity)
+                            playerPhysicsManager.yVelocity = playerPhysicsManager.maxPositiveVelocity;
                         controlsManager.canJump = false;
                     }
                     else
@@ -372,6 +366,7 @@ int main(int argc, char* argv[]) {
                     {
                         Mix_PlayChannel(4, splatSound, 0);
                         dead = true;
+                        playerPhysicsManager.setVelocitiesZero();
                         diedAt = SDL_GetTicks64();
                         gameStarted = false;
                     }
@@ -423,13 +418,18 @@ int main(int argc, char* argv[]) {
                     }
                 }
             }
+            //lethal logic 1
             //todo:check standing on lethal tile or water here
             for (int i = playerRect.x / tileW; i <= (playerRect.x + playerWidth - 1) / tileW; i++)
             {
+                //This is bugged! Player going thru safe block and then being killed
                 //this purposfully looks at the pixels just below the player to see if they are standing on lethal.
                 if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW]]->isLethal)
                 {
+                    if ((*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 3 || (*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 5 || (*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 11 || (*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 13|| (*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 13 || (*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 19 || (*level1.m_tileIds)[i][(playerRect.y + playerHeight) / tileW] == 21)
+                        Mix_PlayChannel(4, splatSound, 0);
                     dead = true;
+                    playerPhysicsManager.setVelocitiesZero();
                     diedAt = SDL_GetTicks64();
                     gameStarted = false;
                 }
@@ -483,6 +483,7 @@ int main(int argc, char* argv[]) {
                     else if (textureToTileMapper.intToTextureTileVector[(*level1.m_tileIds)[i][j]]->isLethal)
                     {
                         dead = true;
+                        playerPhysicsManager.setVelocitiesZero();
                         diedAt = SDL_GetTicks64();
                         gameStarted = false;
                     }
@@ -515,7 +516,8 @@ int main(int argc, char* argv[]) {
         if (dead)
         {
             showMenu = false;
-            youDiedManager.drawYouDied(renderer, &dead, diedAt, &gameStarted, &showMenu, resW, resH/*, youDiedSound*/);
+            youDiedManager.drawYouDied(renderer, &dead, diedAt, &gameStarted, &showMenu, resW, resH, youDiedSound);
+            playerPhysicsManager.setVelocitiesZero();
             if (!dead)
             {
                 playerRect.x = startWidth;
