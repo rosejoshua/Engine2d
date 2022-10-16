@@ -1,10 +1,10 @@
 ****** WARNING: Do not change layout of this document, only edit the exact values and leave no spaces on value lines, do not make explanations go past one line (text editors soft wrap, thats ok) ******
 *** [true|false] HAS COLLISION: stops player velocity immediately when player contacts it ***
-true
+false
 *** [true|false] DRAWS IN FRONT: draw after rendering player and over top...ex: transparent water, edges of clouds or treetops that can be stood on, etc. ***
 false
 *** [true|false] IS LETHAL: kills player with contact/collision ***
-false
+true
 *** [true|false] HAS SPECIAL CHARACTERISTICS: list true to access the properties listed after this one...so that we don't look at the following unless needed ***
 false
 *** [true|false] IS ANIMATED: uses a sequence of frames that get rotated thru no matter what ***

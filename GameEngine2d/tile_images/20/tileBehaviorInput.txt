@@ -1,6 +1,6 @@
 ****** WARNING: Do not change layout of this document, only edit the exact values and leave no spaces on value lines, do not make explanations go past one line (text editors soft wrap, thats ok) ******
 *** [true|false] HAS COLLISION: stops player velocity immediately when player contacts it ***
-true
+false
 *** [true|false] DRAWS IN FRONT: draw after rendering player and over top...ex: transparent water, edges of clouds or treetops that can be stood on, etc. ***
 false
 *** [true|false] IS LETHAL: kills player with contact/collision ***

@@ -49,17 +49,19 @@ int YouDiedManager::initialize(int resW, int resH, SDL_Renderer* renderer)
     SDL_FreeSurface(youDiedTextSurfacePtr);
 }
 
-void YouDiedManager::drawYouDied(SDL_Renderer* renderer, bool* dead, Uint64 diedAt, bool* gameStarted, bool* showMenu, int resW, int resH/*, Sound* youDiedSound*/)
+void YouDiedManager::drawYouDied(SDL_Renderer* renderer, bool* dead, Uint64 diedAt, bool* gameStarted, bool* showMenu, int resW, int resH, Mix_Chunk* youDiedSound)
 {
 
     if (!soundEffectStarted)
     {
-        //todo:play async using callback eventually
-        //youDiedSound->PlaySound();
-        //soundEffectStarted = true;
+        if (SDL_GetTicks64() > diedAt + 501)
+        {
+            Mix_PlayChannel(0, youDiedSound, 0);
+            soundEffectStarted = true;
+        }
     }
     //4 seconds of YouDied screen
-    if (SDL_GetTicks64() < diedAt + 4001 )
+    if (SDL_GetTicks64() < diedAt + 3001 )
     {
         SDL_SetRenderDrawColor(renderer, deadBackgroundColor.r, deadBackgroundColor.g, deadBackgroundColor.b, SDL_ALPHA_OPAQUE);
         SDL_RenderClear(renderer);
