@@ -1,4 +1,4 @@
-# Engine2d [incomplete, project abandoned]
+# Engine2d [abandoned for newer engine with better OOP and user experience]
 
 Demo of final product: https://www.youtube.com/watch?v=X5YyUSyPGuc
 
